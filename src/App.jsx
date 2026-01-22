@@ -343,6 +343,9 @@ const HamoClient = () => {
                 {authMode === 'signin' ? 'Sign In' : 'Create Account'}
               </button>
             </div>
+            <div className="text-center mt-6 text-xs text-gray-400">
+              Version 1.0.0
+            </div>
           </div>
         </div>
       </div>
@@ -410,6 +413,9 @@ const HamoClient = () => {
                 <span>Scan QR Code</span>
               </button>
             </div>
+            <div className="text-center mt-6 text-xs text-gray-400">
+              Version 1.0.0
+            </div>
           </div>
         </div>
       </div>
@@ -439,7 +445,7 @@ const HamoClient = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-4">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             {messages.map((msg) => (
               <div 
@@ -464,8 +470,8 @@ const HamoClient = () => {
           </div>
         </div>
 
-        <div className="bg-white border-t border-gray-200 py-4">
-          <div className="max-w-3xl mx-auto px-4">
+        <div className="bg-white border-t border-gray-200">
+          <div className="max-w-3xl mx-auto px-4 py-4">
             <div className="flex items-center space-x-3">
               <input
                 type="text"
@@ -483,6 +489,9 @@ const HamoClient = () => {
               </button>
             </div>
           </div>
+          <div className="text-center pb-3 text-xs text-gray-400">
+            Version 1.0.0
+          </div>
         </div>
       </div>
     );
@@ -490,7 +499,7 @@ const HamoClient = () => {
 
   if (activeView === 'settings') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
         <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-3xl mx-auto px-4 py-4">
             <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
@@ -629,6 +638,10 @@ const HamoClient = () => {
           </div>
         </div>
 
+        <div className="text-center py-3 text-xs text-gray-400">
+          Version 1.0.0
+        </div>
+
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
             <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
@@ -677,7 +690,7 @@ const HamoClient = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -749,6 +762,10 @@ const HamoClient = () => {
             })}
           </div>
         )}
+      </div>
+
+      <div className="text-center py-3 text-xs text-gray-400">
+        Version 1.0.0
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
