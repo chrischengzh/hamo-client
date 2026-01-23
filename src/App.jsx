@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Settings, ArrowLeft, Send, Camera, QrCode, Plus, User, Mail, Lock, LogOut, Trash2, Upload } from 'lucide-react';
+import { MessageSquare, Settings, ArrowLeft, Send, Camera, QrCode, Plus, User, Mail, Lock, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock } from 'lucide-react';
 
 const HamoClient = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -13,13 +13,219 @@ const HamoClient = () => {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [authForm, setAuthForm] = useState({ email: '', password: '' });
+  const [signUpInviteCode, setSignUpInviteCode] = useState('');
+  const [invalidInviteCode, setInvalidInviteCode] = useState(false);
   const [showInviteInput, setShowInviteInput] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [settingsForm, setSettingsForm] = useState({ nickname: '', email: '', password: '', newPassword: '' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [invitingPro, setInvitingPro] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState('');
+  const [selectedProAvatar, setSelectedProAvatar] = useState(null);
   const chatEndRef = useRef(null);
+
+  // Valid invitation codes from Pros with their associated avatars
+  const validInviteCodes = [
+    'HAMO2024',
+    'THERAPY123',
+    'WELCOME2024',
+    'PRO-INVITE',
+    'MENTAL-HEALTH'
+  ];
+
+  // Map invitation codes to Pro Avatars
+  const inviteCodeToAvatar = {
+    'HAMO2024': {
+      id: 1001,
+      proName: 'Dr. Emily Chen, Ph.D.',
+      avatarName: 'Dr. Emily Chen',
+      theory: 'Cognitive Behavioral Therapy',
+      specialty: 'Depression & Anxiety',
+      avatarPicture: null,
+      welcomeMessage: 'Welcome! I\'m Dr. Emily Chen, and I specialize in Cognitive Behavioral Therapy. I\'m here to help you work through depression and anxiety. Let\'s begin this journey together.'
+    },
+    'THERAPY123': {
+      id: 1002,
+      proName: 'Dr. Marcus Brown, Psy.D.',
+      avatarName: 'Dr. Marcus Brown',
+      theory: 'Dialectical Behavior Therapy',
+      specialty: 'NPD & Personality Disorders',
+      avatarPicture: null,
+      welcomeMessage: 'Hello! I\'m Dr. Marcus Brown. I specialize in working with personality disorders using DBT. I\'m glad you\'re here and ready to start your healing journey.'
+    },
+    'WELCOME2024': {
+      id: 1003,
+      proName: 'Dr. Sarah Johnson, LMFT',
+      avatarName: 'Dr. Sarah Johnson',
+      theory: 'Family Systems Therapy',
+      specialty: 'Family & Couples Therapy',
+      avatarPicture: null,
+      welcomeMessage: 'Welcome! I\'m Dr. Sarah Johnson, and I work with families and couples using systemic therapy. I\'m excited to support you in building stronger relationships.'
+    },
+    'PRO-INVITE': {
+      id: 1004,
+      proName: 'Dr. Lisa Martinez, Ph.D.',
+      avatarName: 'Dr. Lisa Martinez',
+      theory: 'Play Therapy & Child Psychology',
+      specialty: 'Child & Adolescent Therapy',
+      avatarPicture: null,
+      welcomeMessage: 'Hi there! I\'m Dr. Lisa Martinez, and I specialize in helping children and adolescents. I\'m here to support you through any challenges you\'re facing.'
+    },
+    'MENTAL-HEALTH': {
+      id: 1005,
+      proName: 'Dr. James Wilson, M.D.',
+      avatarName: 'Dr. James Wilson',
+      theory: 'Mindfulness-Based Therapy',
+      specialty: 'Stress & Burnout',
+      avatarPicture: null,
+      welcomeMessage: 'Welcome! I\'m Dr. James Wilson. I help people manage stress and recover from burnout using mindfulness techniques. Let\'s work together to find your balance.'
+    }
+  };
+
+  // Mock data for Pro Avatars in the system
+  const allProAvatars = [
+    {
+      id: 1,
+      avatarName: 'Dr. Emily Chen',
+      proName: 'Dr. Emily Chen, Ph.D.',
+      theory: 'Cognitive Behavioral Therapy',
+      specialty: 'Depression & Anxiety',
+      tags: ['Depression Psychologist', 'Anxiety Specialist'],
+      rating: 4.9,
+      sessions: 1247,
+      experience: '12 years',
+      description: 'Specialized in helping individuals overcome depression and anxiety through evidence-based CBT techniques.',
+      avatarPicture: null
+    },
+    {
+      id: 2,
+      avatarName: 'Dr. Marcus Brown',
+      proName: 'Dr. Marcus Brown, Psy.D.',
+      theory: 'Dialectical Behavior Therapy',
+      specialty: 'NPD & Personality Disorders',
+      tags: ['NPD Therapist', 'Personality Disorders'],
+      rating: 4.8,
+      sessions: 892,
+      experience: '15 years',
+      description: 'Expert in treating Narcissistic Personality Disorder and other personality disorders with compassionate care.',
+      avatarPicture: null
+    },
+    {
+      id: 3,
+      avatarName: 'Dr. Sarah Johnson',
+      proName: 'Dr. Sarah Johnson, LMFT',
+      theory: 'Family Systems Therapy',
+      specialty: 'Family & Couples Therapy',
+      tags: ['Family Relation Therapist', 'Couples Counseling'],
+      rating: 4.9,
+      sessions: 1563,
+      experience: '18 years',
+      description: 'Helping families and couples build stronger relationships through systemic therapy approaches.',
+      avatarPicture: null
+    },
+    {
+      id: 4,
+      avatarName: 'Dr. Lisa Martinez',
+      proName: 'Dr. Lisa Martinez, Ph.D.',
+      theory: 'Play Therapy & Child Psychology',
+      specialty: 'Child & Adolescent Therapy',
+      tags: ['Child Therapist', 'Adolescent Psychology'],
+      rating: 5.0,
+      sessions: 2104,
+      experience: '20 years',
+      description: 'Dedicated to supporting children and adolescents through developmental challenges and emotional difficulties.',
+      avatarPicture: null
+    },
+    {
+      id: 5,
+      avatarName: 'Dr. James Wilson',
+      proName: 'Dr. James Wilson, M.D.',
+      theory: 'Mindfulness-Based Therapy',
+      specialty: 'Stress & Burnout',
+      tags: ['Stress Management', 'Burnout Recovery'],
+      rating: 4.7,
+      sessions: 756,
+      experience: '10 years',
+      description: 'Helping professionals manage stress and recover from burnout using mindfulness and meditation techniques.',
+      avatarPicture: null
+    },
+    {
+      id: 6,
+      avatarName: 'Dr. Amanda Lee',
+      proName: 'Dr. Amanda Lee, LCSW',
+      theory: 'Trauma-Focused Therapy',
+      specialty: 'PTSD & Trauma',
+      tags: ['Trauma Specialist', 'PTSD Treatment'],
+      rating: 4.9,
+      sessions: 1328,
+      experience: '14 years',
+      description: 'Specializing in trauma recovery and PTSD treatment with evidence-based therapeutic approaches.',
+      avatarPicture: null
+    },
+    {
+      id: 7,
+      avatarName: 'Dr. Robert Taylor',
+      proName: 'Dr. Robert Taylor, Ph.D.',
+      theory: 'Addiction Recovery Therapy',
+      specialty: 'Substance Abuse & Addiction',
+      tags: ['Addiction Therapist', 'Substance Abuse'],
+      rating: 4.8,
+      sessions: 945,
+      experience: '16 years',
+      description: 'Supporting individuals in their journey to recovery from addiction and substance abuse.',
+      avatarPicture: null
+    },
+    {
+      id: 8,
+      avatarName: 'Dr. Michelle Zhang',
+      proName: 'Dr. Michelle Zhang, Psy.D.',
+      theory: 'Acceptance and Commitment Therapy',
+      specialty: 'OCD & Anxiety Disorders',
+      tags: ['OCD Specialist', 'Anxiety Disorders'],
+      rating: 4.9,
+      sessions: 1089,
+      experience: '11 years',
+      description: 'Expert in treating OCD and anxiety disorders using ACT and exposure therapy techniques.',
+      avatarPicture: null
+    }
+  ];
+
+  const popularTags = [
+    'NPD Therapist',
+    'Depression Psychologist',
+    'Family Relation Therapist',
+    'Child Therapist',
+    'Anxiety Specialist',
+    'Couples Counseling',
+    'Trauma Specialist',
+    'Addiction Therapist',
+    'OCD Specialist',
+    'Stress Management'
+  ];
+
+  // Filter Pro Avatars based on search query and selected tag
+  const getFilteredProAvatars = () => {
+    let filtered = [...allProAvatars];
+
+    if (selectedTag) {
+      filtered = filtered.filter(avatar => avatar.tags.includes(selectedTag));
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(avatar =>
+        avatar.avatarName.toLowerCase().includes(query) ||
+        avatar.proName.toLowerCase().includes(query) ||
+        avatar.specialty.toLowerCase().includes(query) ||
+        avatar.theory.toLowerCase().includes(query) ||
+        avatar.tags.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+
+    return filtered;
+  };
 
   const simulateQRCodeScan = () => {
     const mockProData = {
@@ -47,45 +253,55 @@ const HamoClient = () => {
   }, [messages]);
 
   const handleSignUp = () => {
-    if (authForm.email && authForm.password) {
+    if (authForm.email && authForm.password && signUpInviteCode) {
+      const codeUpper = signUpInviteCode.toUpperCase();
+      
+      // Validate invitation code
+      if (!validInviteCodes.includes(codeUpper) && !invitingPro) {
+        setInvalidInviteCode(true);
+        return;
+      }
+
       if (clients.find(c => c.email === authForm.email)) {
         alert('Email already exists. Please sign in instead.');
         return;
       }
+
+      // Get the Pro Avatar associated with this invitation code
+      const proAvatar = invitingPro || inviteCodeToAvatar[codeUpper];
+      
       const newClient = {
         id: Date.now(),
         email: authForm.email,
         password: authForm.password,
         nickname: authForm.email.split('@')[0],
         avatar: null,
-        connectedAvatars: invitingPro ? [{
-          id: Date.now(),
-          proName: invitingPro.proName,
-          avatarName: invitingPro.avatarName,
-          theory: invitingPro.theory,
-          avatarPicture: null,
+        connectedAvatars: proAvatar ? [{
+          id: proAvatar.id,
+          proName: proAvatar.proName,
+          avatarName: proAvatar.avatarName,
+          theory: proAvatar.theory,
+          avatarPicture: proAvatar.avatarPicture,
           lastChatTime: new Date().toISOString(),
-          messages: []
+          messages: [{
+            id: Date.now(),
+            sender: 'avatar',
+            text: proAvatar.welcomeMessage,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          }]
         }] : []
       };
+      
       setClients([...clients, newClient]);
       setCurrentClient(newClient);
       setConnectedAvatars(newClient.connectedAvatars);
       setIsAuthenticated(true);
       setShowWelcome(false);
       setAuthForm({ email: '', password: '' });
-      
-      if (invitingPro) {
-        const welcomeMsg = {
-          id: Date.now(),
-          sender: 'avatar',
-          text: invitingPro.welcomeMessage,
-          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        };
-        newClient.connectedAvatars[0].messages.push(welcomeMsg);
-      }
+      setSignUpInviteCode('');
+      setInvalidInviteCode(false);
     } else {
-      alert('Please fill in all fields');
+      alert('Please fill in all fields including the invitation code');
     }
   };
 
@@ -203,6 +419,43 @@ const HamoClient = () => {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
+  const handleAddProAvatar = (proAvatar) => {
+    // Check if already connected
+    if (connectedAvatars.find(a => a.id === proAvatar.id)) {
+      alert('You are already connected with this avatar!');
+      setSelectedProAvatar(null);
+      return;
+    }
+
+    const newAvatar = {
+      id: proAvatar.id,
+      proName: proAvatar.proName,
+      avatarName: proAvatar.avatarName,
+      theory: proAvatar.theory,
+      avatarPicture: proAvatar.avatarPicture,
+      lastChatTime: new Date().toISOString(),
+      messages: [{
+        id: Date.now(),
+        sender: 'avatar',
+        text: `Hello! I'm ${proAvatar.avatarName}. ${proAvatar.description} I'm here to help you. How are you feeling today?`,
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      }]
+    };
+
+    const updatedAvatars = [...connectedAvatars, newAvatar];
+    setConnectedAvatars(updatedAvatars);
+    
+    const updatedClient = {
+      ...currentClient,
+      connectedAvatars: updatedAvatars
+    };
+    setCurrentClient(updatedClient);
+    updateClientData(updatedClient);
+
+    setSelectedProAvatar(null);
+    alert('Avatar connected successfully!');
+  };
+
   const handleAddAvatar = () => {
     if (inviteCode.trim()) {
       const newAvatar = {
@@ -316,6 +569,21 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="space-y-4">
+              {invalidInviteCode && authMode === 'signup' && (
+                <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-red-800">Invalid Invitation Code</h3>
+                      <p className="text-sm text-red-700 mt-1">Please check with your therapist for the correct invitation code.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input 
@@ -336,6 +604,24 @@ const HamoClient = () => {
                   placeholder="••••••••"
                 />
               </div>
+              {authMode === 'signup' && !invitingPro && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invitation Code</label>
+                  <input 
+                    type="text" 
+                    value={signUpInviteCode} 
+                    onChange={(e) => {
+                      setSignUpInviteCode(e.target.value);
+                      setInvalidInviteCode(false);
+                    }} 
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      invalidInviteCode ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter code from your therapist"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Get this code from your Pro therapist</p>
+                </div>
+              )}
               <button 
                 onClick={authMode === 'signin' ? handleSignIn : handleSignUp} 
                 className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition"
@@ -344,7 +630,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.0.0
+              Version 1.0.1
             </div>
           </div>
         </div>
@@ -379,6 +665,21 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="space-y-4">
+              {invalidInviteCode && authMode === 'signup' && (
+                <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-red-800">Invalid Invitation Code</h3>
+                      <p className="text-sm text-red-700 mt-1">Please check with your therapist for the correct invitation code.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input 
@@ -399,6 +700,24 @@ const HamoClient = () => {
                   placeholder="••••••••"
                 />
               </div>
+              {authMode === 'signup' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invitation Code</label>
+                  <input 
+                    type="text" 
+                    value={signUpInviteCode} 
+                    onChange={(e) => {
+                      setSignUpInviteCode(e.target.value);
+                      setInvalidInviteCode(false);
+                    }} 
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      invalidInviteCode ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter code from your therapist"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Get this code from your Pro therapist</p>
+                </div>
+              )}
               <button 
                 onClick={authMode === 'signin' ? handleSignIn : handleSignUp} 
                 className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition"
@@ -414,7 +733,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.0.0
+              Version 1.0.1
             </div>
           </div>
         </div>
@@ -490,9 +809,261 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Version 1.0.0
+            Version 1.0.1
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (activeView === 'discover') {
+    const filteredAvatars = getFilteredProAvatars();
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
+        <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-3xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Discover Therapists</h1>
+            
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, specialty, or therapy type..."
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+          {/* Hot Tags */}
+          <div>
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Popular Specialties</h2>
+            <div className="flex flex-wrap gap-2">
+              {popularTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => {
+                    setSelectedTag(selectedTag === tag ? '' : tag);
+                    setSearchQuery('');
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                    selectedTag === tag
+                      ? 'bg-purple-500 text-white'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:border-purple-500'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Recommended Pro Avatars */}
+          <div>
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">
+              {searchQuery || selectedTag ? 'Search Results' : 'Recommended for You'}
+            </h2>
+            
+            {filteredAvatars.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <Compass className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No therapists found</h3>
+                <p className="text-gray-500 mb-6">Try adjusting your search or filters</p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedTag('');
+                  }}
+                  className="text-purple-500 hover:text-purple-600 font-medium"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {filteredAvatars.map((avatar) => (
+                  <div
+                    key={avatar.id}
+                    onClick={() => setSelectedProAvatar(avatar)}
+                    className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition cursor-pointer"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-lg text-gray-900">{avatar.avatarName}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{avatar.specialty}</p>
+                        <p className="text-xs text-gray-500 mb-3">{avatar.theory}</p>
+                        
+                        <div className="flex items-center space-x-4 text-xs text-gray-600 mb-3">
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="font-medium">{avatar.rating}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Award className="w-4 h-4" />
+                            <span>{avatar.sessions} sessions</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{avatar.experience}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {avatar.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-purple-50 text-purple-600 text-xs rounded-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="text-center py-3 text-xs text-gray-400">
+          Version 1.0.1
+        </div>
+
+        {/* Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+          <div className="max-w-3xl mx-auto px-4">
+            <div className="flex items-center justify-around py-3">
+              <button
+                onClick={() => setActiveView('avatars')}
+                className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
+              >
+                <MessageSquare className="w-6 h-6" />
+                <span className="text-xs">Chats</span>
+              </button>
+              <button
+                onClick={() => setActiveView('discover')}
+                className="flex flex-col items-center space-y-1 px-6 py-2 text-purple-500"
+              >
+                <Compass className="w-6 h-6" />
+                <span className="text-xs">Discover</span>
+              </button>
+              <button
+                onClick={() => setActiveView('settings')}
+                className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
+              >
+                <Settings className="w-6 h-6" />
+                <span className="text-xs">Settings</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Pro Avatar Detail Modal */}
+        {selectedProAvatar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                      <User className="w-10 h-10 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{selectedProAvatar.avatarName}</h3>
+                      <p className="text-sm text-gray-600">{selectedProAvatar.proName}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedProAvatar(null)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-1">Specialty</h4>
+                    <p className="text-gray-900">{selectedProAvatar.specialty}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-1">Therapeutic Approach</h4>
+                    <p className="text-gray-900">{selectedProAvatar.theory}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-1">About</h4>
+                    <p className="text-gray-700 text-sm">{selectedProAvatar.description}</p>
+                  </div>
+
+                  <div className="flex items-center space-x-6 py-3 border-t border-b border-gray-200">
+                    <div className="flex items-center space-x-2">
+                      <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                      <div>
+                        <p className="text-lg font-bold text-gray-900">{selectedProAvatar.rating}</p>
+                        <p className="text-xs text-gray-500">Rating</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Award className="w-5 h-5 text-purple-500" />
+                      <div>
+                        <p className="text-lg font-bold text-gray-900">{selectedProAvatar.sessions}</p>
+                        <p className="text-xs text-gray-500">Sessions</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-5 h-5 text-blue-500" />
+                      <div>
+                        <p className="text-lg font-bold text-gray-900">{selectedProAvatar.experience}</p>
+                        <p className="text-xs text-gray-500">Experience</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Specializations</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProAvatar.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full font-medium"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => handleAddProAvatar(selectedProAvatar)}
+                    className="flex-1 bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition font-medium"
+                  >
+                    Add to My Therapists
+                  </button>
+                  <button
+                    onClick={() => setSelectedProAvatar(null)}
+                    className="flex-1 bg-gray-200 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -639,7 +1210,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.0.0
+          Version 1.0.1
         </div>
 
         {showDeleteConfirm && (
@@ -676,6 +1247,13 @@ const HamoClient = () => {
                 <span className="text-xs">Chats</span>
               </button>
               <button
+                onClick={() => setActiveView('discover')}
+                className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
+              >
+                <Compass className="w-6 h-6" />
+                <span className="text-xs">Discover</span>
+              </button>
+              <button
                 onClick={() => setActiveView('settings')}
                 className="flex flex-col items-center space-y-1 px-6 py-2 text-purple-500"
               >
@@ -710,62 +1288,75 @@ const HamoClient = () => {
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
             <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Avatars Connected</h3>
-            <p className="text-gray-500 mb-6">Connect with a therapy avatar to start your journey</p>
+            <p className="text-gray-500 mb-6">Discover and connect with therapy avatars</p>
             <button
-              onClick={() => setActiveView('settings')}
+              onClick={() => setActiveView('discover')}
               className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition"
             >
-              Add Avatar
+              Discover Therapists
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {sortedAvatars.map((avatar) => {
-              const lastMessage = avatar.messages[avatar.messages.length - 1];
-              const lastChatDate = new Date(avatar.lastChatTime);
-              const today = new Date();
-              const isToday = lastChatDate.toDateString() === today.toDateString();
-              const timeDisplay = isToday 
-                ? lastMessage?.time 
-                : lastChatDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          <>
+            <div className="space-y-3">
+              {sortedAvatars.map((avatar) => {
+                const lastMessage = avatar.messages[avatar.messages.length - 1];
+                const lastChatDate = new Date(avatar.lastChatTime);
+                const today = new Date();
+                const isToday = lastChatDate.toDateString() === today.toDateString();
+                const timeDisplay = isToday 
+                  ? lastMessage?.time 
+                  : lastChatDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-              return (
-                <div
-                  key={avatar.id}
-                  onClick={() => selectAvatar(avatar)}
-                  className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition cursor-pointer"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
-                      <MessageSquare className="w-7 h-7 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-gray-900">{avatar.avatarName}</h3>
-                        <span className="text-xs text-gray-400">{timeDisplay}</span>
+                return (
+                  <div
+                    key={avatar.id}
+                    onClick={() => selectAvatar(avatar)}
+                    className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-7 h-7 text-white" />
                       </div>
-                      <p className="text-sm text-gray-500 mb-1">{avatar.proName}</p>
-                      <p className="text-sm text-gray-600 truncate">
-                        {lastMessage ? (
-                          <span>
-                            {lastMessage.sender === 'client' ? 'You: ' : ''}
-                            {lastMessage.text}
-                          </span>
-                        ) : (
-                          'No messages yet'
-                        )}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="font-semibold text-gray-900">{avatar.avatarName}</h3>
+                          <span className="text-xs text-gray-400">{timeDisplay}</span>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-1">{avatar.proName}</p>
+                        <p className="text-sm text-gray-600 truncate">
+                          {lastMessage ? (
+                            <span>
+                              {lastMessage.sender === 'client' ? 'You: ' : ''}
+                              {lastMessage.text}
+                            </span>
+                          ) : (
+                            'No messages yet'
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {/* Discover More Button at Bottom */}
+            <div className="mt-6">
+              <button
+                onClick={() => setActiveView('discover')}
+                className="w-full bg-white border-2 border-purple-500 text-purple-500 px-6 py-4 rounded-xl hover:bg-purple-50 transition flex items-center justify-center space-x-2 font-medium shadow-sm"
+              >
+                <Compass className="w-5 h-5" />
+                <span>Discover More Therapists</span>
+              </button>
+            </div>
+          </>
         )}
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Version 1.0.0
+        Version 1.0.1
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
@@ -777,6 +1368,13 @@ const HamoClient = () => {
             >
               <MessageSquare className="w-6 h-6" />
               <span className="text-xs">Chats</span>
+            </button>
+            <button
+              onClick={() => setActiveView('discover')}
+              className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
+            >
+              <Compass className="w-6 h-6" />
+              <span className="text-xs">Discover</span>
             </button>
             <button
               onClick={() => setActiveView('settings')}
