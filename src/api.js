@@ -91,17 +91,33 @@ class ApiService {
       }
 
       // Parse response
-      const data = await response.json();
-      console.log('🔵 Response data:', data);
+      let data;
+      try {
+        data = await response.json();
+        console.log('🔵 Response data:', data);
+      } catch (parseError) {
+        console.error('🔴 Failed to parse response:', parseError);
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        return {};
+      }
 
       if (!response.ok) {
-        throw new Error(data.detail || data.message || 'Request failed');
+        // Extract error message from various possible formats
+        const errorMessage = data.detail || data.message || data.error ||
+          (typeof data === 'string' ? data : `Request failed with status ${response.status}`);
+        throw new Error(errorMessage);
       }
 
       return data;
     } catch (error) {
       console.error('🔴 API Request Error:', error);
-      throw error;
+      // Ensure we always throw an Error with a string message
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(String(error) || 'Unknown error occurred');
     }
   }
 
@@ -146,7 +162,7 @@ class ApiService {
 
       return {
         success: false,
-        error: error.message,
+        error: error.message || String(error) || 'Registration failed',
       };
     }
   }
@@ -189,7 +205,7 @@ class ApiService {
 
       return {
         success: false,
-        error: error.message,
+        error: error.message || String(error) || 'Login failed',
       };
     }
   }

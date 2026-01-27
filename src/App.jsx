@@ -266,15 +266,21 @@ const HamoClient = () => {
         setAuthForm({ email: '', password: '', nickname: '' });
         setSignUpInviteCode('');
       } else {
+        // Get error message as string
+        const errorMsg = typeof result.error === 'string'
+          ? result.error
+          : (result.error?.message || result.error?.detail || JSON.stringify(result.error) || 'Registration failed');
+
         // Check if it's an invalid invitation code error
-        if (result.error.toLowerCase().includes('invitation') || result.error.toLowerCase().includes('code')) {
+        if (errorMsg.toLowerCase().includes('invitation') || errorMsg.toLowerCase().includes('code') || errorMsg.toLowerCase().includes('invalid')) {
           setInvalidInviteCode(true);
         } else {
-          setAuthError(result.error);
+          setAuthError(errorMsg);
         }
       }
     } catch (error) {
-      setAuthError('Registration failed. Please try again.');
+      console.error('Registration error:', error);
+      setAuthError(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -321,10 +327,15 @@ const HamoClient = () => {
         setShowWelcome(false);
         setAuthForm({ email: '', password: '', nickname: '' });
       } else {
-        setAuthError(result.error || 'Invalid email or password');
+        // Get error message as string
+        const errorMsg = typeof result.error === 'string'
+          ? result.error
+          : (result.error?.message || result.error?.detail || 'Invalid email or password');
+        setAuthError(errorMsg);
       }
     } catch (error) {
-      setAuthError('Login failed. Please try again.');
+      console.error('Login error:', error);
+      setAuthError(error.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
