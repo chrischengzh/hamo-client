@@ -2,6 +2,8 @@
 
 **Hamo Client** is an AI-powered therapy avatar companion app that allows clients to connect with AI therapy avatars created by mental health professionals using the Hamo Pro platform.
 
+!! The code was written entirely by AI!!
+
 ## 🌟 Features
 
 - 🔐 **Secure Authentication**: Sign up and sign in with email and password
