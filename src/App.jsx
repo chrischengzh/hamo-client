@@ -1,20 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Settings, ArrowLeft, Send, Camera, QrCode, Plus, User, Mail, Lock, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock } from 'lucide-react';
+import { MessageSquare, Settings, ArrowLeft, Send, Camera, QrCode, Plus, User, Mail, Lock, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2 } from 'lucide-react';
+import apiService from './api';
 
 const HamoClient = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [authMode, setAuthMode] = useState('signin');
   const [currentClient, setCurrentClient] = useState(null);
-  const [clients, setClients] = useState([]);
   const [activeView, setActiveView] = useState('avatars');
   const [connectedAvatars, setConnectedAvatars] = useState([]);
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
-  const [authForm, setAuthForm] = useState({ email: '', password: '' });
+  const [authForm, setAuthForm] = useState({ email: '', password: '', nickname: '' });
   const [signUpInviteCode, setSignUpInviteCode] = useState('');
   const [invalidInviteCode, setInvalidInviteCode] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [showInviteInput, setShowInviteInput] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [settingsForm, setSettingsForm] = useState({ nickname: '', email: '', password: '', newPassword: '' });
@@ -26,63 +28,24 @@ const HamoClient = () => {
   const [selectedProAvatar, setSelectedProAvatar] = useState(null);
   const chatEndRef = useRef(null);
 
-  // Valid invitation codes from Pros with their associated avatars
-  const validInviteCodes = [
-    'HAMO2024',
-    'THERAPY123',
-    'WELCOME2024',
-    'PRO-INVITE',
-    'MENTAL-HEALTH'
-  ];
-
-  // Map invitation codes to Pro Avatars
-  const inviteCodeToAvatar = {
-    'HAMO2024': {
-      id: 1001,
-      proName: 'Dr. Emily Chen, Ph.D.',
-      avatarName: 'Dr. Emily Chen',
-      theory: 'Cognitive Behavioral Therapy',
-      specialty: 'Depression & Anxiety',
-      avatarPicture: null,
-      welcomeMessage: 'Welcome! I\'m Dr. Emily Chen, and I specialize in Cognitive Behavioral Therapy. I\'m here to help you work through depression and anxiety. Let\'s begin this journey together.'
-    },
-    'THERAPY123': {
-      id: 1002,
-      proName: 'Dr. Marcus Brown, Psy.D.',
-      avatarName: 'Dr. Marcus Brown',
-      theory: 'Dialectical Behavior Therapy',
-      specialty: 'NPD & Personality Disorders',
-      avatarPicture: null,
-      welcomeMessage: 'Hello! I\'m Dr. Marcus Brown. I specialize in working with personality disorders using DBT. I\'m glad you\'re here and ready to start your healing journey.'
-    },
-    'WELCOME2024': {
-      id: 1003,
-      proName: 'Dr. Sarah Johnson, LMFT',
-      avatarName: 'Dr. Sarah Johnson',
-      theory: 'Family Systems Therapy',
-      specialty: 'Family & Couples Therapy',
-      avatarPicture: null,
-      welcomeMessage: 'Welcome! I\'m Dr. Sarah Johnson, and I work with families and couples using systemic therapy. I\'m excited to support you in building stronger relationships.'
-    },
-    'PRO-INVITE': {
-      id: 1004,
-      proName: 'Dr. Lisa Martinez, Ph.D.',
-      avatarName: 'Dr. Lisa Martinez',
-      theory: 'Play Therapy & Child Psychology',
-      specialty: 'Child & Adolescent Therapy',
-      avatarPicture: null,
-      welcomeMessage: 'Hi there! I\'m Dr. Lisa Martinez, and I specialize in helping children and adolescents. I\'m here to support you through any challenges you\'re facing.'
-    },
-    'MENTAL-HEALTH': {
-      id: 1005,
-      proName: 'Dr. James Wilson, M.D.',
-      avatarName: 'Dr. James Wilson',
-      theory: 'Mindfulness-Based Therapy',
-      specialty: 'Stress & Burnout',
-      avatarPicture: null,
-      welcomeMessage: 'Welcome! I\'m Dr. James Wilson. I help people manage stress and recover from burnout using mindfulness techniques. Let\'s work together to find your balance.'
-    }
-  };
+  // Check for existing session on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (apiService.isAuthenticated()) {
+        const storedUser = apiService.getStoredUser();
+        if (storedUser) {
+          setCurrentClient(storedUser);
+          setIsAuthenticated(true);
+          // Fetch connected avatars
+          const result = await apiService.getConnectedAvatars();
+          if (result.success) {
+            setConnectedAvatars(result.avatars);
+          }
+        }
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Mock data for Pro Avatars in the system
   const allProAvatars = [
@@ -252,96 +215,119 @@ const HamoClient = () => {
     }
   }, [messages]);
 
-  const handleSignUp = () => {
-    if (authForm.email && authForm.password && signUpInviteCode) {
-      const codeUpper = signUpInviteCode.toUpperCase();
-      
-      // Validate invitation code
-      if (!validInviteCodes.includes(codeUpper) && !invitingPro) {
-        setInvalidInviteCode(true);
-        return;
-      }
-
-      if (clients.find(c => c.email === authForm.email)) {
-        alert('Email already exists. Please sign in instead.');
-        return;
-      }
-
-      // Get the Pro Avatar associated with this invitation code
-      const proAvatar = invitingPro || inviteCodeToAvatar[codeUpper];
-      
-      const newClient = {
-        id: Date.now(),
-        email: authForm.email,
-        password: authForm.password,
-        nickname: authForm.email.split('@')[0],
-        avatar: null,
-        connectedAvatars: proAvatar ? [{
-          id: proAvatar.id,
-          proName: proAvatar.proName,
-          avatarName: proAvatar.avatarName,
-          theory: proAvatar.theory,
-          avatarPicture: proAvatar.avatarPicture,
-          lastChatTime: new Date().toISOString(),
-          messages: [{
-            id: Date.now(),
-            sender: 'avatar',
-            text: proAvatar.welcomeMessage,
-            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-          }]
-        }] : []
-      };
-      
-      setClients([...clients, newClient]);
-      setCurrentClient(newClient);
-      setConnectedAvatars(newClient.connectedAvatars);
-      setIsAuthenticated(true);
-      setShowWelcome(false);
-      setAuthForm({ email: '', password: '' });
-      setSignUpInviteCode('');
-      setInvalidInviteCode(false);
-    } else {
-      alert('Please fill in all fields including the invitation code');
+  const handleSignUp = async () => {
+    if (!authForm.email || !authForm.password || !signUpInviteCode) {
+      setAuthError('Please fill in all fields including the invitation code');
+      return;
     }
-  };
 
-  const handleSignIn = () => {
-    if (authForm.email && authForm.password) {
-      const client = clients.find(c => c.email === authForm.email && c.password === authForm.password);
-      if (client) {
-        setCurrentClient(client);
-        setConnectedAvatars(client.connectedAvatars || []);
-        setIsAuthenticated(true);
-        setShowWelcome(false);
-        setAuthForm({ email: '', password: '' });
-        
-        if (invitingPro && !client.connectedAvatars.find(a => a.avatarName === invitingPro.avatarName)) {
-          const newConnection = {
-            id: Date.now(),
-            proName: invitingPro.proName,
-            avatarName: invitingPro.avatarName,
-            theory: invitingPro.theory,
-            avatarPicture: null,
+    setIsLoading(true);
+    setAuthError('');
+    setInvalidInviteCode(false);
+
+    try {
+      // Use nickname from form or derive from email
+      const nickname = authForm.nickname || authForm.email.split('@')[0];
+
+      const result = await apiService.registerClient(
+        nickname,
+        authForm.email,
+        authForm.password,
+        signUpInviteCode
+      );
+
+      if (result.success) {
+        setCurrentClient(result.user);
+
+        // If there's a connected avatar from the invitation code, add it to the list
+        if (result.connectedAvatar) {
+          const avatar = {
+            id: result.connectedAvatar.id,
+            proName: result.connectedAvatar.pro_name,
+            avatarName: result.connectedAvatar.avatar_name,
+            theory: result.connectedAvatar.theory,
+            specialty: result.connectedAvatar.specialty,
+            avatarPicture: result.connectedAvatar.avatar_picture,
             lastChatTime: new Date().toISOString(),
             messages: [{
               id: Date.now(),
               sender: 'avatar',
-              text: invitingPro.welcomeMessage,
+              text: result.connectedAvatar.welcome_message || `Hello! I'm ${result.connectedAvatar.avatar_name}. Welcome to Hamo! I'm here to support you on your journey.`,
               time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
             }]
           };
-          client.connectedAvatars.push(newConnection);
-          setConnectedAvatars(client.connectedAvatars);
-          updateClientData(client);
+          setConnectedAvatars([avatar]);
+        } else {
+          setConnectedAvatars([]);
         }
+
+        setIsAuthenticated(true);
+        setShowWelcome(false);
+        setAuthForm({ email: '', password: '', nickname: '' });
+        setSignUpInviteCode('');
       } else {
-        alert('Invalid email or password');
+        // Check if it's an invalid invitation code error
+        if (result.error.toLowerCase().includes('invitation') || result.error.toLowerCase().includes('code')) {
+          setInvalidInviteCode(true);
+        } else {
+          setAuthError(result.error);
+        }
       }
+    } catch (error) {
+      setAuthError('Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const updateClientData = (client) => {
-    setClients(clients.map(c => c.id === client.id ? client : c));
+  const handleSignIn = async () => {
+    if (!authForm.email || !authForm.password) {
+      setAuthError('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    setAuthError('');
+
+    try {
+      const result = await apiService.loginClient(authForm.email, authForm.password);
+
+      if (result.success) {
+        setCurrentClient(result.user);
+
+        // Set connected avatars from the response
+        if (result.connectedAvatars && result.connectedAvatars.length > 0) {
+          const avatars = result.connectedAvatars.map(avatar => ({
+            id: avatar.id,
+            proName: avatar.pro_name,
+            avatarName: avatar.avatar_name,
+            theory: avatar.theory,
+            specialty: avatar.specialty,
+            avatarPicture: avatar.avatar_picture,
+            lastChatTime: avatar.last_chat_time || new Date().toISOString(),
+            messages: avatar.messages || [{
+              id: Date.now(),
+              sender: 'avatar',
+              text: avatar.welcome_message || `Welcome back! I'm ${avatar.avatar_name}. How are you feeling today?`,
+              time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            }]
+          }));
+          setConnectedAvatars(avatars);
+        } else {
+          setConnectedAvatars([]);
+        }
+
+        setIsAuthenticated(true);
+        setShowWelcome(false);
+        setAuthForm({ email: '', password: '', nickname: '' });
+      } else {
+        setAuthError(result.error || 'Invalid email or password');
+      }
+    } catch (error) {
+      setAuthError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSendMessage = () => {
@@ -368,14 +354,6 @@ const HamoClient = () => {
       });
 
       setConnectedAvatars(updatedAvatars);
-      
-      const updatedClient = {
-        ...currentClient,
-        connectedAvatars: updatedAvatars
-      };
-      setCurrentClient(updatedClient);
-      updateClientData(updatedClient);
-
       setMessageInput('');
 
       setTimeout(() => {
@@ -397,13 +375,6 @@ const HamoClient = () => {
         });
 
         setConnectedAvatars(avatarsWithResponse);
-        
-        const clientWithResponse = {
-          ...updatedClient,
-          connectedAvatars: avatarsWithResponse
-        };
-        setCurrentClient(clientWithResponse);
-        updateClientData(clientWithResponse);
       }, 1500);
     }
   };
@@ -442,67 +413,77 @@ const HamoClient = () => {
       }]
     };
 
-    const updatedAvatars = [...connectedAvatars, newAvatar];
-    setConnectedAvatars(updatedAvatars);
-    
-    const updatedClient = {
-      ...currentClient,
-      connectedAvatars: updatedAvatars
-    };
-    setCurrentClient(updatedClient);
-    updateClientData(updatedClient);
-
+    setConnectedAvatars([...connectedAvatars, newAvatar]);
     setSelectedProAvatar(null);
     alert('Avatar connected successfully!');
   };
 
-  const handleAddAvatar = () => {
-    if (inviteCode.trim()) {
-      const newAvatar = {
-        id: Date.now(),
-        proName: 'Dr. New Professional',
-        avatarName: 'Therapy Bot',
-        theory: 'Mindfulness-Based Therapy',
-        avatarPicture: null,
-        lastChatTime: new Date().toISOString(),
-        messages: [{
-          id: Date.now(),
-          sender: 'avatar',
-          text: 'Hello! I\'m excited to work with you. How are you feeling today?',
-          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        }]
-      };
+  const handleAddAvatar = async () => {
+    if (!inviteCode.trim()) {
+      return;
+    }
 
-      const updatedAvatars = [...connectedAvatars, newAvatar];
-      setConnectedAvatars(updatedAvatars);
-      
-      const updatedClient = {
-        ...currentClient,
-        connectedAvatars: updatedAvatars
-      };
-      setCurrentClient(updatedClient);
-      updateClientData(updatedClient);
+    setIsLoading(true);
+    try {
+      const result = await apiService.connectWithAvatar(inviteCode);
 
-      setInviteCode('');
-      setShowInviteInput(false);
-      alert('Avatar connected successfully!');
+      if (result.success && result.avatar) {
+        const newAvatar = {
+          id: result.avatar.id,
+          proName: result.avatar.pro_name,
+          avatarName: result.avatar.avatar_name,
+          theory: result.avatar.theory,
+          specialty: result.avatar.specialty,
+          avatarPicture: result.avatar.avatar_picture,
+          lastChatTime: new Date().toISOString(),
+          messages: [{
+            id: Date.now(),
+            sender: 'avatar',
+            text: result.avatar.welcome_message || `Hello! I'm ${result.avatar.avatar_name}. I'm excited to work with you. How are you feeling today?`,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          }]
+        };
+
+        setConnectedAvatars([...connectedAvatars, newAvatar]);
+        setInviteCode('');
+        setShowInviteInput(false);
+        alert('Avatar connected successfully!');
+      } else {
+        alert(result.error || 'Invalid invitation code');
+      }
+    } catch (error) {
+      alert('Failed to connect with avatar. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleUpdateSettings = () => {
-    const updatedClient = {
-      ...currentClient,
-      nickname: settingsForm.nickname || currentClient.nickname,
-      email: settingsForm.email || currentClient.email,
-      password: settingsForm.newPassword || currentClient.password
-    };
-    setCurrentClient(updatedClient);
-    updateClientData(updatedClient);
-    alert('Settings updated successfully!');
-    setSettingsForm({ nickname: '', email: '', password: '', newPassword: '' });
+  const handleUpdateSettings = async () => {
+    setIsLoading(true);
+    try {
+      const profileData = {};
+      if (settingsForm.nickname) profileData.nickname = settingsForm.nickname;
+      if (settingsForm.email) profileData.email = settingsForm.email;
+      if (settingsForm.newPassword) profileData.password = settingsForm.newPassword;
+
+      const result = await apiService.updateProfile(profileData);
+
+      if (result.success) {
+        setCurrentClient(result.user);
+        alert('Settings updated successfully!');
+        setSettingsForm({ nickname: '', email: '', password: '', newPassword: '' });
+      } else {
+        alert(result.error || 'Failed to update settings');
+      }
+    } catch (error) {
+      alert('Failed to update settings. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await apiService.logout();
     setIsAuthenticated(false);
     setCurrentClient(null);
     setConnectedAvatars([]);
@@ -510,12 +491,23 @@ const HamoClient = () => {
     setSelectedAvatar(null);
   };
 
-  const handleDeleteAccount = () => {
-    setClients(clients.filter(c => c.id !== currentClient.id));
-    setIsAuthenticated(false);
-    setCurrentClient(null);
-    setConnectedAvatars([]);
-    setShowDeleteConfirm(false);
+  const handleDeleteAccount = async () => {
+    setIsLoading(true);
+    try {
+      const result = await apiService.deleteAccount();
+      if (result.success) {
+        setIsAuthenticated(false);
+        setCurrentClient(null);
+        setConnectedAvatars([]);
+        setShowDeleteConfirm(false);
+      } else {
+        alert(result.error || 'Failed to delete account');
+      }
+    } catch (error) {
+      alert('Failed to delete account. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const selectAvatar = (avatar) => {
@@ -555,21 +547,21 @@ const HamoClient = () => {
               </div>
             )}
             <div className="flex space-x-2 mb-6">
-              <button 
-                onClick={() => setAuthMode('signin')} 
+              <button
+                onClick={() => { setAuthMode('signin'); setAuthError(''); setInvalidInviteCode(false); }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signin' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Sign In
               </button>
-              <button 
-                onClick={() => setAuthMode('signup')} 
+              <button
+                onClick={() => { setAuthMode('signup'); setAuthError(''); setInvalidInviteCode(false); }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signup' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Sign Up
               </button>
             </div>
             <div className="space-y-4">
-              {invalidInviteCode && authMode === 'signup' && (
+              {(invalidInviteCode || authError) && (
                 <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4">
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
@@ -578,59 +570,90 @@ const HamoClient = () => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-red-800">Invalid Invitation Code</h3>
-                      <p className="text-sm text-red-700 mt-1">Please check with your therapist for the correct invitation code.</p>
+                      <h3 className="text-sm font-medium text-red-800">
+                        {invalidInviteCode ? 'Invalid Invitation Code' : 'Error'}
+                      </h3>
+                      <p className="text-sm text-red-700 mt-1">
+                        {invalidInviteCode
+                          ? 'Please check with your therapist for the correct invitation code.'
+                          : authError}
+                      </p>
                     </div>
                   </div>
                 </div>
               )}
+              {authMode === 'signup' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nickname</label>
+                  <input
+                    type="text"
+                    value={authForm.nickname}
+                    onChange={(e) => setAuthForm({ ...authForm, nickname: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Your display name"
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input 
-                  type="email" 
-                  value={authForm.email} 
-                  onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })} 
+                <input
+                  type="email"
+                  value={authForm.email}
+                  onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="your@email.com"
+                  disabled={isLoading}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input 
-                  type="password" 
-                  value={authForm.password} 
-                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })} 
+                <input
+                  type="password"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="••••••••"
+                  disabled={isLoading}
                 />
               </div>
               {authMode === 'signup' && !invitingPro && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Invitation Code</label>
-                  <input 
-                    type="text" 
-                    value={signUpInviteCode} 
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invitation Code <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={signUpInviteCode}
                     onChange={(e) => {
                       setSignUpInviteCode(e.target.value);
                       setInvalidInviteCode(false);
-                    }} 
+                      setAuthError('');
+                    }}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                       invalidInviteCode ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Enter code from your therapist"
+                    disabled={isLoading}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Get this code from your Pro therapist</p>
+                  <p className="text-xs text-gray-500 mt-1">Required - Get this code from your Pro therapist</p>
                 </div>
               )}
-              <button 
-                onClick={authMode === 'signin' ? handleSignIn : handleSignUp} 
-                className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition"
+              <button
+                onClick={authMode === 'signin' ? handleSignIn : handleSignUp}
+                disabled={isLoading}
+                className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
-                {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>{authMode === 'signin' ? 'Signing In...' : 'Creating Account...'}</span>
+                  </>
+                ) : (
+                  <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                )}
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.0.1
+              Version 1.2.4
             </div>
           </div>
         </div>
@@ -651,21 +674,21 @@ const HamoClient = () => {
             <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Hamo</h1>
             <p className="text-center text-gray-500 mb-8">Your Personal Therapy Companion</p>
             <div className="flex space-x-2 mb-6">
-              <button 
-                onClick={() => setAuthMode('signin')} 
+              <button
+                onClick={() => { setAuthMode('signin'); setAuthError(''); setInvalidInviteCode(false); }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signin' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Sign In
               </button>
-              <button 
-                onClick={() => setAuthMode('signup')} 
+              <button
+                onClick={() => { setAuthMode('signup'); setAuthError(''); setInvalidInviteCode(false); }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signup' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Sign Up
               </button>
             </div>
             <div className="space-y-4">
-              {invalidInviteCode && authMode === 'signup' && (
+              {(invalidInviteCode || authError) && (
                 <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4">
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
@@ -674,66 +697,98 @@ const HamoClient = () => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-red-800">Invalid Invitation Code</h3>
-                      <p className="text-sm text-red-700 mt-1">Please check with your therapist for the correct invitation code.</p>
+                      <h3 className="text-sm font-medium text-red-800">
+                        {invalidInviteCode ? 'Invalid Invitation Code' : 'Error'}
+                      </h3>
+                      <p className="text-sm text-red-700 mt-1">
+                        {invalidInviteCode
+                          ? 'Please check with your therapist for the correct invitation code.'
+                          : authError}
+                      </p>
                     </div>
                   </div>
                 </div>
               )}
+              {authMode === 'signup' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nickname</label>
+                  <input
+                    type="text"
+                    value={authForm.nickname}
+                    onChange={(e) => setAuthForm({ ...authForm, nickname: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Your display name"
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input 
-                  type="email" 
-                  value={authForm.email} 
-                  onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })} 
+                <input
+                  type="email"
+                  value={authForm.email}
+                  onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="your@email.com"
+                  disabled={isLoading}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input 
-                  type="password" 
-                  value={authForm.password} 
-                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })} 
+                <input
+                  type="password"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="••••••••"
+                  disabled={isLoading}
                 />
               </div>
               {authMode === 'signup' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Invitation Code</label>
-                  <input 
-                    type="text" 
-                    value={signUpInviteCode} 
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invitation Code <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={signUpInviteCode}
                     onChange={(e) => {
                       setSignUpInviteCode(e.target.value);
                       setInvalidInviteCode(false);
-                    }} 
+                      setAuthError('');
+                    }}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                       invalidInviteCode ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Enter code from your therapist"
+                    disabled={isLoading}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Get this code from your Pro therapist</p>
+                  <p className="text-xs text-gray-500 mt-1">Required - Get this code from your Pro therapist</p>
                 </div>
               )}
-              <button 
-                onClick={authMode === 'signin' ? handleSignIn : handleSignUp} 
-                className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition"
+              <button
+                onClick={authMode === 'signin' ? handleSignIn : handleSignUp}
+                disabled={isLoading}
+                className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
-                {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>{authMode === 'signin' ? 'Signing In...' : 'Creating Account...'}</span>
+                  </>
+                ) : (
+                  <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                )}
               </button>
-              <button 
+              <button
                 onClick={simulateQRCodeScan}
-                className="w-full border-2 border-purple-500 text-purple-500 py-3 rounded-lg font-medium hover:bg-purple-50 transition flex items-center justify-center space-x-2"
+                disabled={isLoading}
+                className="w-full border-2 border-purple-500 text-purple-500 py-3 rounded-lg font-medium hover:bg-purple-50 transition disabled:opacity-50 flex items-center justify-center space-x-2"
               >
                 <QrCode className="w-5 h-5" />
                 <span>Scan QR Code</span>
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.0.1
+              Version 1.2.4
             </div>
           </div>
         </div>
@@ -809,7 +864,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Version 1.0.1
+            Version 1.2.4
           </div>
         </div>
       </div>
@@ -936,7 +991,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.0.1
+          Version 1.2.4
         </div>
 
         {/* Bottom Navigation */}
@@ -1210,7 +1265,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.0.1
+          Version 1.2.4
         </div>
 
         {showDeleteConfirm && (
@@ -1356,7 +1411,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Version 1.0.1
+        Version 1.2.4
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
