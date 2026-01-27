@@ -241,23 +241,26 @@ const HamoClient = () => {
 
         // If there's a connected avatar from the invitation code, add it to the list
         if (result.connectedAvatar) {
+          console.log('✅ Connected avatar from registration:', result.connectedAvatar);
           const avatar = {
             id: result.connectedAvatar.id,
-            proName: result.connectedAvatar.pro_name,
-            avatarName: result.connectedAvatar.avatar_name,
-            theory: result.connectedAvatar.theory,
-            specialty: result.connectedAvatar.specialty,
-            avatarPicture: result.connectedAvatar.avatar_picture,
+            // Support both old and new API response formats
+            proName: result.connectedAvatar.therapist_name || result.connectedAvatar.pro_name,
+            avatarName: result.connectedAvatar.name || result.connectedAvatar.avatar_name,
+            theory: result.connectedAvatar.theory || '',
+            specialty: result.connectedAvatar.specialty || '',
+            avatarPicture: result.connectedAvatar.avatar_picture || null,
             lastChatTime: new Date().toISOString(),
             messages: [{
               id: Date.now(),
               sender: 'avatar',
-              text: result.connectedAvatar.welcome_message || `Hello! I'm ${result.connectedAvatar.avatar_name}. Welcome to Hamo! I'm here to support you on your journey.`,
+              text: result.connectedAvatar.welcome_message || `Hello! I'm ${result.connectedAvatar.name || result.connectedAvatar.avatar_name}. Welcome to Hamo! I'm here to support you on your journey.`,
               time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
             }]
           };
           setConnectedAvatars([avatar]);
         } else {
+          console.log('🔵 No connected_avatar in response');
           setConnectedAvatars([]);
         }
 
@@ -266,21 +269,20 @@ const HamoClient = () => {
         setAuthForm({ email: '', password: '', nickname: '' });
         setSignUpInviteCode('');
       } else {
-        // Get error message as string
+        // Handle error - ensure it's a string
         const errorMsg = typeof result.error === 'string'
           ? result.error
           : (result.error?.message || result.error?.detail || JSON.stringify(result.error) || 'Registration failed');
 
         // Check if it's an invalid invitation code error
-        if (errorMsg.toLowerCase().includes('invitation') || errorMsg.toLowerCase().includes('code') || errorMsg.toLowerCase().includes('invalid')) {
+        if (errorMsg.toLowerCase().includes('invitation') || errorMsg.toLowerCase().includes('code')) {
           setInvalidInviteCode(true);
         } else {
           setAuthError(errorMsg);
         }
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      setAuthError(error.message || 'Registration failed. Please try again.');
+      setAuthError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -327,15 +329,10 @@ const HamoClient = () => {
         setShowWelcome(false);
         setAuthForm({ email: '', password: '', nickname: '' });
       } else {
-        // Get error message as string
-        const errorMsg = typeof result.error === 'string'
-          ? result.error
-          : (result.error?.message || result.error?.detail || 'Invalid email or password');
-        setAuthError(errorMsg);
+        setAuthError(result.error || 'Invalid email or password');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setAuthError(error.message || 'Login failed. Please try again.');
+      setAuthError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -664,7 +661,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.2.4
+              Version 1.2.6
             </div>
           </div>
         </div>
@@ -799,7 +796,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.2.4
+              Version 1.2.6
             </div>
           </div>
         </div>
@@ -875,7 +872,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Version 1.2.4
+            Version 1.2.6
           </div>
         </div>
       </div>
@@ -1002,7 +999,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.2.4
+          Version 1.2.6
         </div>
 
         {/* Bottom Navigation */}
@@ -1276,7 +1273,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.2.4
+          Version 1.2.6
         </div>
 
         {showDeleteConfirm && (
@@ -1422,7 +1419,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Version 1.2.4
+        Version 1.2.6
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">

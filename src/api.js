@@ -1,5 +1,5 @@
-// Hamo Client API Service v1.2.4
-// Integrates with Hamo-UME Backend v1.2.4
+// Hamo Client API Service v1.2.6
+// Integrates with Hamo-UME Backend v1.2.6
 // Production: https://api.hamo.ai/api
 
 const API_BASE_URL = 'https://api.hamo.ai/api';
@@ -91,33 +91,17 @@ class ApiService {
       }
 
       // Parse response
-      let data;
-      try {
-        data = await response.json();
-        console.log('🔵 Response data:', data);
-      } catch (parseError) {
-        console.error('🔴 Failed to parse response:', parseError);
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
-        }
-        return {};
-      }
+      const data = await response.json();
+      console.log('🔵 Response data:', data);
 
       if (!response.ok) {
-        // Extract error message from various possible formats
-        const errorMessage = data.detail || data.message || data.error ||
-          (typeof data === 'string' ? data : `Request failed with status ${response.status}`);
-        throw new Error(errorMessage);
+        throw new Error(data.detail || data.message || 'Request failed');
       }
 
       return data;
     } catch (error) {
       console.error('🔴 API Request Error:', error);
-      // Ensure we always throw an Error with a string message
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(String(error) || 'Unknown error occurred');
+      throw error;
     }
   }
 
@@ -150,11 +134,17 @@ class ApiService {
         this.setUser(response.user);
       }
 
+      // Log connected_avatar for debugging
+      if (response.connected_avatar) {
+        console.log('✅ Connected avatar received:', response.connected_avatar);
+      }
+
       return {
         success: true,
         user: response.user,
         accessToken: response.access_token,
         // The connected avatar from the invitation code
+        // API returns: { id, name, therapist_name }
         connectedAvatar: response.connected_avatar,
       };
     } catch (error) {
@@ -162,7 +152,7 @@ class ApiService {
 
       return {
         success: false,
-        error: error.message || String(error) || 'Registration failed',
+        error: error.message,
       };
     }
   }
@@ -205,7 +195,7 @@ class ApiService {
 
       return {
         success: false,
-        error: error.message || String(error) || 'Login failed',
+        error: error.message,
       };
     }
   }
@@ -281,15 +271,22 @@ class ApiService {
   }
 
   // Get client's connected avatars
+  // Uses GET /api/avatars endpoint
   async getConnectedAvatars() {
     try {
-      const response = await this.request('/client/avatars', {
+      console.log('🔵 Fetching connected avatars...');
+      const response = await this.request('/avatars', {
         method: 'GET',
       });
 
+      console.log('✅ Avatars fetched:', response);
+
+      // Handle both array response and object with avatars property
+      const avatars = Array.isArray(response) ? response : (response.avatars || []);
+
       return {
         success: true,
-        avatars: response.avatars || [],
+        avatars: avatars,
       };
     } catch (error) {
       console.error('❌ Failed to get connected avatars:', error);
@@ -297,6 +294,32 @@ class ApiService {
       return {
         success: false,
         avatars: [],
+        error: error.message,
+      };
+    }
+  }
+
+  // Get a specific avatar by ID
+  // Uses GET /api/avatars/{avatar_id} endpoint
+  async getAvatarById(avatarId) {
+    try {
+      console.log('🔵 Fetching avatar by ID:', avatarId);
+      const response = await this.request(`/avatars/${avatarId}`, {
+        method: 'GET',
+      });
+
+      console.log('✅ Avatar fetched:', response);
+
+      return {
+        success: true,
+        avatar: response,
+      };
+    } catch (error) {
+      console.error('❌ Failed to get avatar:', error);
+
+      return {
+        success: false,
+        avatar: null,
         error: error.message,
       };
     }
