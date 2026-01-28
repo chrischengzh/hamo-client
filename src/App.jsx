@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Settings, ArrowLeft, Send, Camera, QrCode, Plus, User, Mail, Lock, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2 } from 'lucide-react';
+import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2 } from 'lucide-react';
 import apiService from './api';
 
 const HamoClient = () => {
@@ -190,24 +190,6 @@ const HamoClient = () => {
     return filtered;
   };
 
-  const simulateQRCodeScan = () => {
-    const mockProData = {
-      proName: 'Dr. Sarah Johnson',
-      avatarName: 'Dr. Compassion',
-      theory: 'Cognitive Behavioral Therapy',
-      welcomeMessage: 'Welcome! I\'m here to support you on your journey to better mental health. Let\'s work together to help you feel your best.'
-    };
-    setInvitingPro(mockProData);
-    setWelcomeMessage(mockProData.welcomeMessage);
-    setShowWelcome(true);
-  };
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('invite')) {
-      simulateQRCodeScan();
-    }
-  }, []);
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -661,7 +643,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.2.6
+              Version 1.2.7
             </div>
           </div>
         </div>
@@ -786,17 +768,9 @@ const HamoClient = () => {
                   <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
                 )}
               </button>
-              <button
-                onClick={simulateQRCodeScan}
-                disabled={isLoading}
-                className="w-full border-2 border-purple-500 text-purple-500 py-3 rounded-lg font-medium hover:bg-purple-50 transition disabled:opacity-50 flex items-center justify-center space-x-2"
-              >
-                <QrCode className="w-5 h-5" />
-                <span>Scan QR Code</span>
-              </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.2.6
+              Version 1.2.7
             </div>
           </div>
         </div>
@@ -872,7 +846,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Version 1.2.6
+            Version 1.2.7
           </div>
         </div>
       </div>
@@ -999,7 +973,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.2.6
+          Version 1.2.7
         </div>
 
         {/* Bottom Navigation */}
@@ -1178,13 +1152,6 @@ const HamoClient = () => {
                 </div>
               )}
 
-              <button
-                onClick={simulateQRCodeScan}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition"
-              >
-                <QrCode className="w-5 h-5" />
-                <span>Scan QR Code</span>
-              </button>
             </div>
           </div>
 
@@ -1273,7 +1240,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.2.6
+          Version 1.2.7
         </div>
 
         {showDeleteConfirm && (
@@ -1419,7 +1386,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Version 1.2.6
+        Version 1.2.7
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">

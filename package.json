@@ -1,6 +1,6 @@
 {
   "name": "hamo-client",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Hamo Client - AI Therapy Avatar Companion App",
   "private": true,
   "scripts": {
