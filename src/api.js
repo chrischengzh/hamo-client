@@ -100,8 +100,12 @@ class ApiService {
         if (typeof data.detail === 'string') {
           errorMessage = data.detail;
         } else if (Array.isArray(data.detail)) {
-          // FastAPI validation errors return an array
-          errorMessage = data.detail.map(err => err.msg || err.message || JSON.stringify(err)).join(', ');
+          // FastAPI validation errors return an array - include field location
+          errorMessage = data.detail.map(err => {
+            const field = err.loc ? err.loc.join('.') : 'field';
+            const msg = err.msg || err.message || JSON.stringify(err);
+            return `${field}: ${msg}`;
+          }).join('; ');
         } else if (typeof data.detail === 'object' && data.detail !== null) {
           errorMessage = data.detail.message || data.detail.msg || JSON.stringify(data.detail);
         } else if (data.message) {
@@ -121,17 +125,40 @@ class ApiService {
   // The invitation code links the client to a Pro's avatar
   async registerClient(nickname, email, password, invitationCode) {
     try {
-      console.log('🔵 Registering Client:', { email, nickname, invitationCode });
+      console.log('🔵 Registration parameters:', {
+        nickname,
+        email,
+        passwordLength: password ? password.length : 0,
+        invitationCode
+      });
+
+      const requestBody = {
+        email: email,
+        password: password,
+        nickname: nickname,
+        invitation_code: invitationCode,
+      };
+
+      console.log('🔵 Request body (password masked):', {
+        email: requestBody.email,
+        password: requestBody.password ? '***' : undefined,
+        nickname: requestBody.nickname,
+        invitation_code: requestBody.invitation_code,
+      });
 
       const response = await this.request('/auth/registerClient', {
         method: 'POST',
         skipAuth: true,
+<<<<<<< HEAD
         body: JSON.stringify({
           full_name: nickname,
           email: email,
           password: password,
           invitation_code: invitationCode,
         }),
+=======
+        body: JSON.stringify(requestBody),
+>>>>>>> 49d56e3 (Fix client registration API error handling and form validation)
       });
 
       console.log('✅ Registration successful:', response);

@@ -198,7 +198,27 @@ const HamoClient = () => {
   }, [messages]);
 
   const handleSignUp = async () => {
-    if (!authForm.email || !authForm.password || !signUpInviteCode) {
+    console.log('🔍 Form state before trim:', {
+      email: authForm.email,
+      passwordLength: authForm.password?.length || 0,
+      nickname: authForm.nickname,
+      inviteCode: signUpInviteCode
+    });
+
+    // Trim all input values
+    const email = authForm.email.trim();
+    const password = authForm.password.trim();
+    const nicknameInput = authForm.nickname.trim();
+    const inviteCode = signUpInviteCode.trim();
+
+    console.log('🔍 Form values after trim:', {
+      email,
+      passwordLength: password.length,
+      nickname: nicknameInput,
+      inviteCode
+    });
+
+    if (!email || !password || !inviteCode) {
       setAuthError('Please fill in all fields including the invitation code');
       return;
     }
@@ -209,13 +229,20 @@ const HamoClient = () => {
 
     try {
       // Use nickname from form or derive from email
-      const nickname = authForm.nickname || authForm.email.split('@')[0];
+      const nickname = nicknameInput || email.split('@')[0];
+
+      console.log('📤 Calling registerClient with:', {
+        nickname,
+        email,
+        passwordLength: password.length,
+        inviteCode
+      });
 
       const result = await apiService.registerClient(
         nickname,
-        authForm.email,
-        authForm.password,
-        signUpInviteCode
+        email,
+        password,
+        inviteCode
       );
 
       if (result.success) {
@@ -538,13 +565,25 @@ const HamoClient = () => {
             )}
             <div className="flex space-x-2 mb-6">
               <button
-                onClick={() => { setAuthMode('signin'); setAuthError(''); setInvalidInviteCode(false); }}
+                onClick={() => {
+                  setAuthMode('signin');
+                  setAuthError('');
+                  setInvalidInviteCode(false);
+                  setAuthForm({ email: '', password: '', nickname: '' });
+                  setSignUpInviteCode('');
+                }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signin' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Sign In
               </button>
               <button
-                onClick={() => { setAuthMode('signup'); setAuthError(''); setInvalidInviteCode(false); }}
+                onClick={() => {
+                  setAuthMode('signup');
+                  setAuthError('');
+                  setInvalidInviteCode(false);
+                  setAuthForm({ email: '', password: '', nickname: '' });
+                  setSignUpInviteCode('');
+                }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signup' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Sign Up
@@ -665,13 +704,25 @@ const HamoClient = () => {
             <p className="text-center text-gray-500 mb-8">Your Personal Therapy Companion</p>
             <div className="flex space-x-2 mb-6">
               <button
-                onClick={() => { setAuthMode('signin'); setAuthError(''); setInvalidInviteCode(false); }}
+                onClick={() => {
+                  setAuthMode('signin');
+                  setAuthError('');
+                  setInvalidInviteCode(false);
+                  setAuthForm({ email: '', password: '', nickname: '' });
+                  setSignUpInviteCode('');
+                }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signin' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Sign In
               </button>
               <button
-                onClick={() => { setAuthMode('signup'); setAuthError(''); setInvalidInviteCode(false); }}
+                onClick={() => {
+                  setAuthMode('signup');
+                  setAuthError('');
+                  setInvalidInviteCode(false);
+                  setAuthForm({ email: '', password: '', nickname: '' });
+                  setSignUpInviteCode('');
+                }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signup' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Sign Up
