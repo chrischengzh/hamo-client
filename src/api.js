@@ -1,5 +1,5 @@
-// Hamo Client API Service v1.2.7
-// Integrates with Hamo-UME Backend v1.2.7
+// Hamo Client API Service v1.2.8
+// Integrates with Hamo-UME Backend v1.2.8
 // Production: https://api.hamo.ai/api
 
 const API_BASE_URL = 'https://api.hamo.ai/api';
