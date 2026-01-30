@@ -682,7 +682,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.2.8
+              Version 1.3.0
             </div>
           </div>
         </div>
@@ -821,7 +821,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.2.8
+              Version 1.3.0
             </div>
           </div>
         </div>
