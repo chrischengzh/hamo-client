@@ -897,7 +897,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Version 1.2.8
+            Version 1.3.0
           </div>
         </div>
       </div>
@@ -1024,7 +1024,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.2.8
+          Version 1.3.0
         </div>
 
         {/* Bottom Navigation */}
@@ -1291,7 +1291,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.2.8
+          Version 1.3.0
         </div>
 
         {showDeleteConfirm && (
@@ -1437,7 +1437,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Version 1.2.8
+        Version 1.3.0
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
