@@ -149,16 +149,7 @@ class ApiService {
       const response = await this.request('/auth/registerClient', {
         method: 'POST',
         skipAuth: true,
-<<<<<<< HEAD
-        body: JSON.stringify({
-          full_name: nickname,
-          email: email,
-          password: password,
-          invitation_code: invitationCode,
-        }),
-=======
         body: JSON.stringify(requestBody),
->>>>>>> 49d56e3 (Fix client registration API error handling and form validation)
       });
 
       console.log('✅ Registration successful:', response);
