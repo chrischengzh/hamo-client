@@ -1,5 +1,5 @@
-// Hamo Client API Service v1.2.6
-// Integrates with Hamo-UME Backend v1.2.6
+// Hamo Client API Service v1.2.8
+// Integrates with Hamo-UME Backend v1.2.8
 // Production: https://api.hamo.ai/api
 
 const API_BASE_URL = 'https://api.hamo.ai/api';
@@ -95,7 +95,19 @@ class ApiService {
       console.log('🔵 Response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.detail || data.message || 'Request failed');
+        // Handle different error formats from the API
+        let errorMessage = 'Request failed';
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          // FastAPI validation errors return an array
+          errorMessage = data.detail.map(err => err.msg || err.message || JSON.stringify(err)).join(', ');
+        } else if (typeof data.detail === 'object' && data.detail !== null) {
+          errorMessage = data.detail.message || data.detail.msg || JSON.stringify(data.detail);
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+        throw new Error(errorMessage);
       }
 
       return data;
