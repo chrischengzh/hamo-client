@@ -127,7 +127,7 @@ class ApiService {
         method: 'POST',
         skipAuth: true,
         body: JSON.stringify({
-          nickname: nickname,
+          full_name: nickname,
           email: email,
           password: password,
           invitation_code: invitationCode,
