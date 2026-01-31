@@ -28,6 +28,23 @@ const HamoClient = () => {
   const [selectedProAvatar, setSelectedProAvatar] = useState(null);
   const chatEndRef = useRef(null);
 
+  // Helper function to transform avatar data from API to UI format
+  const transformAvatarData = (avatar) => ({
+    id: avatar.id,
+    proName: avatar.pro_name || avatar.proName || 'Therapist',
+    avatarName: avatar.avatar_name || avatar.avatarName || avatar.name || 'Avatar',
+    theory: avatar.theory || 'N/A',
+    specialty: avatar.specialty || 'N/A',
+    avatarPicture: avatar.avatar_picture || avatar.avatarPicture || null,
+    lastChatTime: avatar.last_chat_time || avatar.lastChatTime || new Date().toISOString(),
+    messages: avatar.messages || [{
+      id: Date.now(),
+      sender: 'avatar',
+      text: avatar.welcome_message || `Welcome back! I'm ${avatar.avatar_name || avatar.name || 'your therapist'}. How are you feeling today?`,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    }]
+  });
+
   // Check for existing session on mount
   useEffect(() => {
     const checkAuth = async () => {
@@ -38,8 +55,9 @@ const HamoClient = () => {
           setIsAuthenticated(true);
           // Fetch connected avatars
           const result = await apiService.getConnectedAvatars();
-          if (result.success) {
-            setConnectedAvatars(result.avatars);
+          if (result.success && result.avatars && result.avatars.length > 0) {
+            const transformedAvatars = result.avatars.map(transformAvatarData);
+            setConnectedAvatars(transformedAvatars);
           }
         }
       }
@@ -251,22 +269,7 @@ const HamoClient = () => {
         // If there's a connected avatar from the invitation code, add it to the list
         if (result.connectedAvatar) {
           console.log('✅ Connected avatar from registration:', result.connectedAvatar);
-          const avatar = {
-            id: result.connectedAvatar.id,
-            // Support both old and new API response formats
-            proName: result.connectedAvatar.therapist_name || result.connectedAvatar.pro_name,
-            avatarName: result.connectedAvatar.name || result.connectedAvatar.avatar_name,
-            theory: result.connectedAvatar.theory || '',
-            specialty: result.connectedAvatar.specialty || '',
-            avatarPicture: result.connectedAvatar.avatar_picture || null,
-            lastChatTime: new Date().toISOString(),
-            messages: [{
-              id: Date.now(),
-              sender: 'avatar',
-              text: result.connectedAvatar.welcome_message || `Hello! I'm ${result.connectedAvatar.name || result.connectedAvatar.avatar_name}. Welcome to Hamo! I'm here to support you on your journey.`,
-              time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            }]
-          };
+          const avatar = transformAvatarData(result.connectedAvatar);
           setConnectedAvatars([avatar]);
         } else {
           console.log('🔵 No connected_avatar in response');
@@ -314,21 +317,7 @@ const HamoClient = () => {
 
         // Set connected avatars from the response
         if (result.connectedAvatars && result.connectedAvatars.length > 0) {
-          const avatars = result.connectedAvatars.map(avatar => ({
-            id: avatar.id,
-            proName: avatar.pro_name,
-            avatarName: avatar.avatar_name,
-            theory: avatar.theory,
-            specialty: avatar.specialty,
-            avatarPicture: avatar.avatar_picture,
-            lastChatTime: avatar.last_chat_time || new Date().toISOString(),
-            messages: avatar.messages || [{
-              id: Date.now(),
-              sender: 'avatar',
-              text: avatar.welcome_message || `Welcome back! I'm ${avatar.avatar_name}. How are you feeling today?`,
-              time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            }]
-          }));
+          const avatars = result.connectedAvatars.map(transformAvatarData);
           setConnectedAvatars(avatars);
         } else {
           setConnectedAvatars([]);
@@ -682,7 +671,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.3.0
+              Version 1.3.1
             </div>
           </div>
         </div>
@@ -821,7 +810,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.3.0
+              Version 1.3.1
             </div>
           </div>
         </div>
@@ -897,7 +886,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Version 1.3.0
+            Version 1.3.1
           </div>
         </div>
       </div>
@@ -1024,7 +1013,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.3.0
+          Version 1.3.1
         </div>
 
         {/* Bottom Navigation */}
@@ -1291,7 +1280,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.3.0
+          Version 1.3.1
         </div>
 
         {showDeleteConfirm && (
@@ -1437,7 +1426,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Version 1.3.0
+        Version 1.3.1
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
