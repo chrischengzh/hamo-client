@@ -53,11 +53,14 @@ const HamoClient = () => {
         if (storedUser) {
           setCurrentClient(storedUser);
           setIsAuthenticated(true);
-          // Fetch connected avatars
+          // Fetch connected avatars from the new client-specific endpoint
           const result = await apiService.getConnectedAvatars();
           if (result.success && result.avatars && result.avatars.length > 0) {
             const transformedAvatars = result.avatars.map(transformAvatarData);
             setConnectedAvatars(transformedAvatars);
+          } else {
+            // No avatars connected yet
+            setConnectedAvatars([]);
           }
         }
       }

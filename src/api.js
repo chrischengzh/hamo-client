@@ -301,15 +301,16 @@ class ApiService {
   }
 
   // Get client's connected avatars
-  // Uses GET /api/avatars endpoint
+  // Uses GET /api/client/avatars endpoint (client-specific)
+  // Note: The backend needs to implement this endpoint to return all avatars connected to the current client
   async getConnectedAvatars() {
     try {
-      console.log('🔵 Fetching connected avatars...');
-      const response = await this.request('/avatars', {
+      console.log('🔵 Fetching connected avatars for client...');
+      const response = await this.request('/client/avatars', {
         method: 'GET',
       });
 
-      console.log('✅ Avatars fetched:', response);
+      console.log('✅ Client avatars fetched:', response);
 
       // Handle both array response and object with avatars property
       const avatars = Array.isArray(response) ? response : (response.avatars || []);
