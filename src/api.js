@@ -1,5 +1,5 @@
-// Hamo Client API Service v1.3.1
-// Integrates with Hamo-UME Backend v1.3.1
+// Hamo Client API Service v1.3.7
+// Integrates with Hamo-UME Backend v1.3.7
 // Production: https://api.hamo.ai/api
 
 const API_BASE_URL = 'https://api.hamo.ai/api';
@@ -164,17 +164,20 @@ class ApiService {
         this.setUser(response.user);
       }
 
-      // Log connected_avatar for debugging
-      if (response.connected_avatar) {
-        console.log('✅ Connected avatar received:', response.connected_avatar);
+      // Log connected avatars for debugging
+      // v1.3.6: Backend now returns connected_avatars array (preferred) and connected_avatar (backward compat)
+      if (response.connected_avatars && response.connected_avatars.length > 0) {
+        console.log('✅ Connected avatars received (array):', response.connected_avatars);
+      } else if (response.connected_avatar) {
+        console.log('✅ Connected avatar received (single):', response.connected_avatar);
       }
 
       return {
         success: true,
         user: response.user,
         accessToken: response.access_token,
-        // The connected avatar from the invitation code
-        // API returns: { id, name, therapist_name }
+        // v1.3.6: Prefer connected_avatars array, fallback to single connected_avatar for backward compat
+        connectedAvatars: response.connected_avatars || [],
         connectedAvatar: response.connected_avatar,
       };
     } catch (error) {
@@ -330,6 +333,38 @@ class ApiService {
     }
   }
 
+  // Get all public avatars for discovery (no auth required)
+  // Uses GET /api/discover/avatars endpoint (public list)
+  // v1.3.7: Fetch real Pro Avatars for Discover page
+  async getAllAvatars() {
+    try {
+      console.log('🔵 Fetching all public avatars...');
+      // Use public endpoint - no auth required
+      const response = await this.request('/discover/avatars', {
+        method: 'GET',
+        skipAuth: true,  // No authentication needed for public discovery
+      });
+
+      console.log('✅ Public avatars fetched:', response);
+
+      // Handle both array response and object with avatars property
+      const avatars = Array.isArray(response) ? response : (response.avatars || []);
+
+      return {
+        success: true,
+        avatars: avatars,
+      };
+    } catch (error) {
+      console.error('❌ Failed to get public avatars:', error);
+
+      return {
+        success: false,
+        avatars: [],
+        error: error.message,
+      };
+    }
+  }
+
   // Get a specific avatar by ID
   // Uses GET /api/avatars/{avatar_id} endpoint
   async getAvatarById(avatarId) {
@@ -373,6 +408,34 @@ class ApiService {
       return {
         success: true,
         avatar: response.avatar,
+      };
+    } catch (error) {
+      console.error('❌ Avatar connection failed:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // v1.3.7: Connect with avatar by ID (from Discover page)
+  async connectWithAvatarById(avatarId) {
+    try {
+      console.log('🔵 Connecting with avatar by ID:', avatarId);
+
+      const response = await this.request('/client/avatar/connect-by-id', {
+        method: 'POST',
+        body: JSON.stringify({
+          avatar_id: avatarId,
+        }),
+      });
+
+      console.log('✅ Avatar connection successful:', response);
+
+      return {
+        success: true,
+        avatar: response.avatar || response,
       };
     } catch (error) {
       console.error('❌ Avatar connection failed:', error);

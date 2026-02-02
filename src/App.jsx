@@ -26,21 +26,25 @@ const HamoClient = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [selectedProAvatar, setSelectedProAvatar] = useState(null);
+  const [allProAvatars, setAllProAvatars] = useState([]);
+  const [isLoadingAvatars, setIsLoadingAvatars] = useState(false);
   const chatEndRef = useRef(null);
 
   // Helper function to transform avatar data from API to UI format
+  // v1.3.7: Using backend field names for consistency
   const transformAvatarData = (avatar) => ({
     id: avatar.id,
-    proName: avatar.pro_name || avatar.proName || 'Therapist',
-    avatarName: avatar.avatar_name || avatar.avatarName || avatar.name || 'Avatar',
-    theory: avatar.theory || 'N/A',
+    pro_name: avatar.pro_name || 'Therapist',
+    name: avatar.name || avatar.avatar_name || 'Avatar',
+    therapeutic_approaches: avatar.therapeutic_approaches || [],
     specialty: avatar.specialty || 'N/A',
-    avatarPicture: avatar.avatar_picture || avatar.avatarPicture || null,
-    lastChatTime: avatar.last_chat_time || avatar.lastChatTime || new Date().toISOString(),
+    about: avatar.about || '',
+    avatar_picture: avatar.avatar_picture || null,
+    last_chat_time: avatar.last_chat_time || new Date().toISOString(),
     messages: avatar.messages || [{
       id: Date.now(),
       sender: 'avatar',
-      text: avatar.welcome_message || `Welcome back! I'm ${avatar.avatar_name || avatar.name || 'your therapist'}. How are you feeling today?`,
+      text: avatar.welcome_message || `Welcome back! I'm ${avatar.name || avatar.avatar_name || 'your therapist'}. How are you feeling today?`,
       time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     }]
   });
@@ -68,143 +72,88 @@ const HamoClient = () => {
     checkAuth();
   }, []);
 
-  // Mock data for Pro Avatars in the system
-  const allProAvatars = [
-    {
-      id: 1,
-      avatarName: 'Dr. Emily Chen',
-      proName: 'Dr. Emily Chen, Ph.D.',
-      theory: 'Cognitive Behavioral Therapy',
-      specialty: 'Depression & Anxiety',
-      tags: ['Depression Psychologist', 'Anxiety Specialist'],
-      rating: 4.9,
-      sessions: 1247,
-      experience: '12 years',
-      description: 'Specialized in helping individuals overcome depression and anxiety through evidence-based CBT techniques.',
-      avatarPicture: null
-    },
-    {
-      id: 2,
-      avatarName: 'Dr. Marcus Brown',
-      proName: 'Dr. Marcus Brown, Psy.D.',
-      theory: 'Dialectical Behavior Therapy',
-      specialty: 'NPD & Personality Disorders',
-      tags: ['NPD Therapist', 'Personality Disorders'],
-      rating: 4.8,
-      sessions: 892,
-      experience: '15 years',
-      description: 'Expert in treating Narcissistic Personality Disorder and other personality disorders with compassionate care.',
-      avatarPicture: null
-    },
-    {
-      id: 3,
-      avatarName: 'Dr. Sarah Johnson',
-      proName: 'Dr. Sarah Johnson, LMFT',
-      theory: 'Family Systems Therapy',
-      specialty: 'Family & Couples Therapy',
-      tags: ['Family Relation Therapist', 'Couples Counseling'],
-      rating: 4.9,
-      sessions: 1563,
-      experience: '18 years',
-      description: 'Helping families and couples build stronger relationships through systemic therapy approaches.',
-      avatarPicture: null
-    },
-    {
-      id: 4,
-      avatarName: 'Dr. Lisa Martinez',
-      proName: 'Dr. Lisa Martinez, Ph.D.',
-      theory: 'Play Therapy & Child Psychology',
-      specialty: 'Child & Adolescent Therapy',
-      tags: ['Child Therapist', 'Adolescent Psychology'],
-      rating: 5.0,
-      sessions: 2104,
-      experience: '20 years',
-      description: 'Dedicated to supporting children and adolescents through developmental challenges and emotional difficulties.',
-      avatarPicture: null
-    },
-    {
-      id: 5,
-      avatarName: 'Dr. James Wilson',
-      proName: 'Dr. James Wilson, M.D.',
-      theory: 'Mindfulness-Based Therapy',
-      specialty: 'Stress & Burnout',
-      tags: ['Stress Management', 'Burnout Recovery'],
-      rating: 4.7,
-      sessions: 756,
-      experience: '10 years',
-      description: 'Helping professionals manage stress and recover from burnout using mindfulness and meditation techniques.',
-      avatarPicture: null
-    },
-    {
-      id: 6,
-      avatarName: 'Dr. Amanda Lee',
-      proName: 'Dr. Amanda Lee, LCSW',
-      theory: 'Trauma-Focused Therapy',
-      specialty: 'PTSD & Trauma',
-      tags: ['Trauma Specialist', 'PTSD Treatment'],
-      rating: 4.9,
-      sessions: 1328,
-      experience: '14 years',
-      description: 'Specializing in trauma recovery and PTSD treatment with evidence-based therapeutic approaches.',
-      avatarPicture: null
-    },
-    {
-      id: 7,
-      avatarName: 'Dr. Robert Taylor',
-      proName: 'Dr. Robert Taylor, Ph.D.',
-      theory: 'Addiction Recovery Therapy',
-      specialty: 'Substance Abuse & Addiction',
-      tags: ['Addiction Therapist', 'Substance Abuse'],
-      rating: 4.8,
-      sessions: 945,
-      experience: '16 years',
-      description: 'Supporting individuals in their journey to recovery from addiction and substance abuse.',
-      avatarPicture: null
-    },
-    {
-      id: 8,
-      avatarName: 'Dr. Michelle Zhang',
-      proName: 'Dr. Michelle Zhang, Psy.D.',
-      theory: 'Acceptance and Commitment Therapy',
-      specialty: 'OCD & Anxiety Disorders',
-      tags: ['OCD Specialist', 'Anxiety Disorders'],
-      rating: 4.9,
-      sessions: 1089,
-      experience: '11 years',
-      description: 'Expert in treating OCD and anxiety disorders using ACT and exposure therapy techniques.',
-      avatarPicture: null
+  // v1.3.7: Fetch real Pro Avatars from API for Discover page
+  // API response: { id, name, specialty, therapeutic_approaches[], about, experience_years, experience_months, pro_name, avatar_picture }
+  // Using backend field names directly for maintainability
+  const fetchAllAvatars = async () => {
+    setIsLoadingAvatars(true);
+    try {
+      const result = await apiService.getAllAvatars();
+      if (result.success && result.avatars) {
+        // Keep backend field names for consistency
+        const transformedAvatars = result.avatars.map(avatar => {
+          // Format experience from years and months (computed field)
+          let experience = '';
+          const years = avatar.experience_years || 0;
+          const months = avatar.experience_months || 0;
+          if (years > 0 && months > 0) {
+            experience = `${years}y ${months}m`;
+          } else if (years > 0) {
+            experience = `${years} years`;
+          } else if (months > 0) {
+            experience = `${months} months`;
+          }
+
+          return {
+            id: avatar.id,
+            name: avatar.name || 'Avatar',
+            pro_name: avatar.pro_name || '',
+            therapeutic_approaches: avatar.therapeutic_approaches || [],
+            specialty: avatar.specialty || '',
+            specializations: avatar.specializations || [],
+            rating: 5.0,  // default value
+            sessions: 0,  // discover API doesn't return this
+            experience: experience,  // computed from experience_years/months
+            experience_years: avatar.experience_years || 0,
+            experience_months: avatar.experience_months || 0,
+            about: avatar.about || '',
+            avatar_picture: avatar.avatar_picture || null
+          };
+        });
+        setAllProAvatars(transformedAvatars);
+        console.log('✅ Loaded public avatars:', transformedAvatars);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load public avatars:', error);
+    } finally {
+      setIsLoadingAvatars(false);
     }
-  ];
+  };
 
-  const popularTags = [
-    'NPD Therapist',
-    'Depression Psychologist',
-    'Family Relation Therapist',
-    'Child Therapist',
-    'Anxiety Specialist',
-    'Couples Counseling',
-    'Trauma Specialist',
-    'Addiction Therapist',
-    'OCD Specialist',
-    'Stress Management'
-  ];
+  // Fetch avatars when entering Discover view
+  useEffect(() => {
+    if (activeView === 'discover' && allProAvatars.length === 0) {
+      fetchAllAvatars();
+    }
+  }, [activeView]);
 
-  // Filter Pro Avatars based on search query and selected tag
+  // v1.3.7: Get unique specialties from actual avatar data
+  const getUniqueSpecialties = () => {
+    const specialties = allProAvatars
+      .map(avatar => avatar.specialty)
+      .filter(specialty => specialty && specialty.trim() !== '');
+    return [...new Set(specialties)];
+  };
+
+  // Filter Pro Avatars based on search query and selected specialty
   const getFilteredProAvatars = () => {
     let filtered = [...allProAvatars];
 
+    // v1.3.7: Filter by specialty (not tags)
     if (selectedTag) {
-      filtered = filtered.filter(avatar => avatar.tags.includes(selectedTag));
+      filtered = filtered.filter(avatar =>
+        avatar.specialty && avatar.specialty === selectedTag
+      );
     }
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(avatar =>
-        avatar.avatarName.toLowerCase().includes(query) ||
-        avatar.proName.toLowerCase().includes(query) ||
-        avatar.specialty.toLowerCase().includes(query) ||
-        avatar.theory.toLowerCase().includes(query) ||
-        avatar.tags.some(tag => tag.toLowerCase().includes(query))
+        (avatar.name && avatar.name.toLowerCase().includes(query)) ||
+        (avatar.pro_name && avatar.pro_name.toLowerCase().includes(query)) ||
+        (avatar.specialty && avatar.specialty.toLowerCase().includes(query)) ||
+        (avatar.therapeutic_approaches && avatar.therapeutic_approaches.some(approach => approach.toLowerCase().includes(query))) ||
+        (avatar.specializations && avatar.specializations.some(spec => spec.toLowerCase().includes(query)))
       );
     }
 
@@ -269,14 +218,29 @@ const HamoClient = () => {
       if (result.success) {
         setCurrentClient(result.user);
 
-        // If there's a connected avatar from the invitation code, add it to the list
-        if (result.connectedAvatar) {
-          console.log('✅ Connected avatar from registration:', result.connectedAvatar);
+        // v1.3.6: Prefer connected_avatars array, fallback to single connected_avatar for backward compat
+        if (result.connectedAvatars && result.connectedAvatars.length > 0) {
+          // Use the new array format (v1.3.6+)
+          console.log('✅ Connected avatars from registration (array):', result.connectedAvatars);
+          const avatars = result.connectedAvatars.map(transformAvatarData);
+          setConnectedAvatars(avatars);
+        } else if (result.connectedAvatar) {
+          // Backward compat: use single avatar format
+          console.log('✅ Connected avatar from registration (single):', result.connectedAvatar);
           const avatar = transformAvatarData(result.connectedAvatar);
           setConnectedAvatars([avatar]);
         } else {
-          console.log('🔵 No connected_avatar in response');
-          setConnectedAvatars([]);
+          // Fallback: fetch connected avatars from API if not returned in registration response
+          console.log('🔵 No connected avatars in registration response, fetching from API...');
+          const avatarsResult = await apiService.getConnectedAvatars();
+          if (avatarsResult.success && avatarsResult.avatars && avatarsResult.avatars.length > 0) {
+            console.log('✅ Fetched connected avatars:', avatarsResult.avatars);
+            const transformedAvatars = avatarsResult.avatars.map(transformAvatarData);
+            setConnectedAvatars(transformedAvatars);
+          } else {
+            console.log('🔵 No avatars found after registration');
+            setConnectedAvatars([]);
+          }
         }
 
         setIsAuthenticated(true);
@@ -355,7 +319,7 @@ const HamoClient = () => {
         if (a.id === selectedAvatar.id) {
           return {
             ...a,
-            lastChatTime: new Date().toISOString(),
+            last_chat_time: new Date().toISOString(),
             messages: updatedMessages
           };
         }
@@ -399,7 +363,9 @@ const HamoClient = () => {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const handleAddProAvatar = (proAvatar) => {
+  // v1.3.7: Connect with avatar via API (not just local)
+  // Using backend field names for consistency
+  const handleAddProAvatar = async (proAvatar) => {
     // Check if already connected
     if (connectedAvatars.find(a => a.id === proAvatar.id)) {
       alert('You are already connected with this avatar!');
@@ -407,24 +373,42 @@ const HamoClient = () => {
       return;
     }
 
-    const newAvatar = {
-      id: proAvatar.id,
-      proName: proAvatar.proName,
-      avatarName: proAvatar.avatarName,
-      theory: proAvatar.theory,
-      avatarPicture: proAvatar.avatarPicture,
-      lastChatTime: new Date().toISOString(),
-      messages: [{
-        id: Date.now(),
-        sender: 'avatar',
-        text: `Hello! I'm ${proAvatar.avatarName}. ${proAvatar.description} I'm here to help you. How are you feeling today?`,
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      }]
-    };
+    setIsLoading(true);
+    try {
+      const result = await apiService.connectWithAvatarById(proAvatar.id);
 
-    setConnectedAvatars([...connectedAvatars, newAvatar]);
-    setSelectedProAvatar(null);
-    alert('Avatar connected successfully!');
+      if (result.success) {
+        // Use avatar data from API response if available, fallback to proAvatar
+        const avatarData = result.avatar || proAvatar;
+        const newAvatar = {
+          id: avatarData.id || proAvatar.id,
+          pro_name: avatarData.pro_name || proAvatar.pro_name,
+          name: avatarData.name || avatarData.avatar_name || proAvatar.name,
+          therapeutic_approaches: avatarData.therapeutic_approaches || proAvatar.therapeutic_approaches || [],
+          specialty: avatarData.specialty || proAvatar.specialty,
+          about: avatarData.about || proAvatar.about || '',
+          avatar_picture: avatarData.avatar_picture || proAvatar.avatar_picture,
+          last_chat_time: new Date().toISOString(),
+          messages: [{
+            id: Date.now(),
+            sender: 'avatar',
+            text: avatarData.welcome_message || `Hello! I'm ${proAvatar.name}. ${proAvatar.about || ''} I'm here to help you. How are you feeling today?`,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          }]
+        };
+
+        setConnectedAvatars([...connectedAvatars, newAvatar]);
+        setSelectedProAvatar(null);
+        alert('Avatar connected successfully!');
+      } else {
+        alert(result.error || 'Failed to connect with avatar');
+      }
+    } catch (error) {
+      console.error('❌ Failed to connect with avatar:', error);
+      alert('Failed to connect with avatar. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAddAvatar = async () => {
@@ -437,18 +421,20 @@ const HamoClient = () => {
       const result = await apiService.connectWithAvatar(inviteCode);
 
       if (result.success && result.avatar) {
+        // Using backend field names for consistency
         const newAvatar = {
           id: result.avatar.id,
-          proName: result.avatar.pro_name,
-          avatarName: result.avatar.avatar_name,
-          theory: result.avatar.theory,
+          pro_name: result.avatar.pro_name,
+          name: result.avatar.name || result.avatar.avatar_name,
+          therapeutic_approaches: result.avatar.therapeutic_approaches || [],
           specialty: result.avatar.specialty,
-          avatarPicture: result.avatar.avatar_picture,
-          lastChatTime: new Date().toISOString(),
+          about: result.avatar.about || '',
+          avatar_picture: result.avatar.avatar_picture,
+          last_chat_time: new Date().toISOString(),
           messages: [{
             id: Date.now(),
             sender: 'avatar',
-            text: result.avatar.welcome_message || `Hello! I'm ${result.avatar.avatar_name}. I'm excited to work with you. How are you feeling today?`,
+            text: result.avatar.welcome_message || `Hello! I'm ${result.avatar.name || result.avatar.avatar_name}. I'm excited to work with you. How are you feeling today?`,
             time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
           }]
         };
@@ -530,8 +516,8 @@ const HamoClient = () => {
     setActiveView('avatars');
   };
 
-  const sortedAvatars = [...connectedAvatars].sort((a, b) => 
-    new Date(b.lastChatTime) - new Date(a.lastChatTime)
+  const sortedAvatars = [...connectedAvatars].sort((a, b) =>
+    new Date(b.last_chat_time) - new Date(a.last_chat_time)
   );
 
   if (showWelcome && !isAuthenticated) {
@@ -674,7 +660,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.3.1
+              Hamo Client Version 1.3.7
             </div>
           </div>
         </div>
@@ -813,7 +799,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Version 1.3.1
+              Hamo Client Version 1.3.7
             </div>
           </div>
         </div>
@@ -837,8 +823,8 @@ const HamoClient = () => {
                 <MessageSquare className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
-                <h2 className="font-semibold text-gray-900">{selectedAvatar.avatarName}</h2>
-                <p className="text-xs text-gray-500">{selectedAvatar.proName}</p>
+                <h2 className="font-semibold text-gray-900">{selectedAvatar.name}</h2>
+                <p className="text-xs text-gray-500">{selectedAvatar.pro_name}</p>
               </div>
             </div>
           </div>
@@ -889,7 +875,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Version 1.3.1
+            Hamo Client Version 1.3.7
           </div>
         </div>
       </div>
@@ -920,49 +906,58 @@ const HamoClient = () => {
         </div>
 
         <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-          {/* Hot Tags */}
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Popular Specialties</h2>
-            <div className="flex flex-wrap gap-2">
-              {popularTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => {
-                    setSelectedTag(selectedTag === tag ? '' : tag);
-                    setSearchQuery('');
-                  }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    selectedTag === tag
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:border-purple-500'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
+          {/* Popular Specialties - dynamically from avatar data */}
+          {getUniqueSpecialties().length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">Popular Specialties</h2>
+              <div className="flex flex-wrap gap-2">
+                {getUniqueSpecialties().map((specialty) => (
+                  <button
+                    key={specialty}
+                    onClick={() => {
+                      setSelectedTag(selectedTag === specialty ? '' : specialty);
+                      setSearchQuery('');
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                      selectedTag === specialty
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:border-purple-500'
+                    }`}
+                  >
+                    {specialty}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Recommended Pro Avatars */}
           <div>
             <h2 className="text-sm font-semibold text-gray-700 mb-3">
               {searchQuery || selectedTag ? 'Search Results' : 'Recommended for You'}
             </h2>
-            
-            {filteredAvatars.length === 0 ? (
+
+            {isLoadingAvatars ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <Loader2 className="w-12 h-12 text-purple-500 mx-auto mb-4 animate-spin" />
+                <p className="text-gray-500">Loading therapists...</p>
+              </div>
+            ) : filteredAvatars.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm p-12 text-center">
                 <Compass className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No therapists found</h3>
-                <p className="text-gray-500 mb-6">Try adjusting your search or filters</p>
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedTag('');
-                  }}
-                  className="text-purple-500 hover:text-purple-600 font-medium"
-                >
-                  Clear filters
-                </button>
+                <p className="text-gray-500 mb-6">{allProAvatars.length === 0 ? 'No therapists available yet' : 'Try adjusting your search or filters'}</p>
+                {(searchQuery || selectedTag) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedTag('');
+                    }}
+                    className="text-purple-500 hover:text-purple-600 font-medium"
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
@@ -977,35 +972,41 @@ const HamoClient = () => {
                         <User className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg text-gray-900">{avatar.avatarName}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{avatar.specialty}</p>
-                        <p className="text-xs text-gray-500 mb-3">{avatar.theory}</p>
-                        
+                        <h3 className="font-semibold text-lg text-gray-900">{avatar.name}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{avatar.specialty || 'N/A'}</p>
+                        <p className="text-xs text-gray-500 mb-3">{avatar.therapeutic_approaches && avatar.therapeutic_approaches.length > 0 ? avatar.therapeutic_approaches.join(' • ') : 'N/A'}</p>
+
                         <div className="flex items-center space-x-4 text-xs text-gray-600 mb-3">
                           <div className="flex items-center space-x-1">
                             <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span className="font-medium">{avatar.rating}</span>
+                            <span className="font-medium">{avatar.rating || 5.0}</span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <Award className="w-4 h-4" />
-                            <span>{avatar.sessions} sessions</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{avatar.experience}</span>
-                          </div>
+                          {avatar.sessions > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <Award className="w-4 h-4" />
+                              <span>{avatar.sessions} sessions</span>
+                            </div>
+                          )}
+                          {avatar.experience && avatar.experience !== 'N/A' && (
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4" />
+                              <span>{avatar.experience}</span>
+                            </div>
+                          )}
                         </div>
 
-                        <div className="flex flex-wrap gap-2">
-                          {avatar.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-purple-50 text-purple-600 text-xs rounded-full"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
+                        {avatar.specializations && avatar.specializations.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {avatar.specializations.map((spec, index) => (
+                              <span
+                                key={index}
+                                className="px-2 py-1 bg-purple-50 text-purple-600 text-xs rounded-full"
+                              >
+                                {spec}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1016,7 +1017,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.3.1
+          Hamo Client Version 1.3.7
         </div>
 
         {/* Bottom Navigation */}
@@ -1059,8 +1060,8 @@ const HamoClient = () => {
                       <User className="w-10 h-10 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900">{selectedProAvatar.avatarName}</h3>
-                      <p className="text-sm text-gray-600">{selectedProAvatar.proName}</p>
+                      <h3 className="text-xl font-bold text-gray-900">{selectedProAvatar.name}</h3>
+                      <p className="text-sm text-gray-600">{selectedProAvatar.pro_name}</p>
                     </div>
                   </div>
                   <button
@@ -1074,56 +1075,64 @@ const HamoClient = () => {
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-1">Specialty</h4>
-                    <p className="text-gray-900">{selectedProAvatar.specialty}</p>
+                    <p className="text-gray-900">{selectedProAvatar.specialty || 'N/A'}</p>
                   </div>
 
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-1">Therapeutic Approach</h4>
-                    <p className="text-gray-900">{selectedProAvatar.theory}</p>
+                    <p className="text-gray-900">{selectedProAvatar.therapeutic_approaches && selectedProAvatar.therapeutic_approaches.length > 0 ? selectedProAvatar.therapeutic_approaches.join(' • ') : 'N/A'}</p>
                   </div>
 
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-1">About</h4>
-                    <p className="text-gray-700 text-sm">{selectedProAvatar.description}</p>
-                  </div>
+                  {selectedProAvatar.about && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-1">About</h4>
+                      <p className="text-gray-700 text-sm">{selectedProAvatar.about}</p>
+                    </div>
+                  )}
 
                   <div className="flex items-center space-x-6 py-3 border-t border-b border-gray-200">
                     <div className="flex items-center space-x-2">
                       <Star className="w-5 h-5 text-yellow-400 fill-current" />
                       <div>
-                        <p className="text-lg font-bold text-gray-900">{selectedProAvatar.rating}</p>
+                        <p className="text-lg font-bold text-gray-900">{selectedProAvatar.rating || 5.0}</p>
                         <p className="text-xs text-gray-500">Rating</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Award className="w-5 h-5 text-purple-500" />
-                      <div>
-                        <p className="text-lg font-bold text-gray-900">{selectedProAvatar.sessions}</p>
-                        <p className="text-xs text-gray-500">Sessions</p>
+                    {selectedProAvatar.sessions > 0 && (
+                      <div className="flex items-center space-x-2">
+                        <Award className="w-5 h-5 text-purple-500" />
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{selectedProAvatar.sessions}</p>
+                          <p className="text-xs text-gray-500">Sessions</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="w-5 h-5 text-blue-500" />
-                      <div>
-                        <p className="text-lg font-bold text-gray-900">{selectedProAvatar.experience}</p>
-                        <p className="text-xs text-gray-500">Experience</p>
+                    )}
+                    {selectedProAvatar.experience && selectedProAvatar.experience !== 'N/A' && (
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5 text-blue-500" />
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{selectedProAvatar.experience}</p>
+                          <p className="text-xs text-gray-500">Experience</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Specializations</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedProAvatar.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full font-medium"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                  {selectedProAvatar.specializations && selectedProAvatar.specializations.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Specializations</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProAvatar.specializations.map((spec, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full font-medium"
+                          >
+                            {spec}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="flex space-x-3 mt-6">
@@ -1283,7 +1292,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Version 1.3.1
+          Hamo Client Version 1.3.7
         </div>
 
         {showDeleteConfirm && (
@@ -1374,11 +1383,11 @@ const HamoClient = () => {
             <div className="space-y-3">
               {sortedAvatars.map((avatar) => {
                 const lastMessage = avatar.messages[avatar.messages.length - 1];
-                const lastChatDate = new Date(avatar.lastChatTime);
+                const lastChatDate = new Date(avatar.last_chat_time);
                 const today = new Date();
                 const isToday = lastChatDate.toDateString() === today.toDateString();
-                const timeDisplay = isToday 
-                  ? lastMessage?.time 
+                const timeDisplay = isToday
+                  ? lastMessage?.time
                   : lastChatDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
                 return (
@@ -1393,10 +1402,10 @@ const HamoClient = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-semibold text-gray-900">{avatar.avatarName}</h3>
+                          <h3 className="font-semibold text-gray-900">{avatar.name}</h3>
                           <span className="text-xs text-gray-400">{timeDisplay}</span>
                         </div>
-                        <p className="text-sm text-gray-500 mb-1">{avatar.proName}</p>
+                        <p className="text-sm text-gray-500 mb-1">{avatar.pro_name}</p>
                         <p className="text-sm text-gray-600 truncate">
                           {lastMessage ? (
                             <span>
@@ -1429,7 +1438,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Version 1.3.1
+        Hamo Client Version 1.3.7
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
