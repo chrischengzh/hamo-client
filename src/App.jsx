@@ -137,7 +137,11 @@ const HamoClient = () => {
 
   // Filter Pro Avatars based on search query and selected specialty
   const getFilteredProAvatars = () => {
-    let filtered = [...allProAvatars];
+    // v1.3.8: Get IDs of already connected avatars
+    const connectedIds = new Set(connectedAvatars.map(a => a.id));
+
+    // Filter out already connected avatars first
+    let filtered = allProAvatars.filter(avatar => !connectedIds.has(avatar.id));
 
     // v1.3.7: Filter by specialty (not tags)
     if (selectedTag) {
@@ -660,7 +664,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.7
+              Hamo Client Version 1.3.8
             </div>
           </div>
         </div>
@@ -799,7 +803,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.7
+              Hamo Client Version 1.3.8
             </div>
           </div>
         </div>
@@ -875,7 +879,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Hamo Client Version 1.3.7
+            Hamo Client Version 1.3.8
           </div>
         </div>
       </div>
@@ -1017,7 +1021,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Hamo Client Version 1.3.7
+          Hamo Client Version 1.3.8
         </div>
 
         {/* Bottom Navigation */}
@@ -1292,7 +1296,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Hamo Client Version 1.3.7
+          Hamo Client Version 1.3.8
         </div>
 
         {showDeleteConfirm && (
@@ -1438,7 +1442,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Hamo Client Version 1.3.7
+        Hamo Client Version 1.3.8
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
