@@ -664,7 +664,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.9
+              Hamo Client Version 1.3.10
             </div>
           </div>
         </div>
@@ -803,7 +803,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.9
+              Hamo Client Version 1.3.10
             </div>
           </div>
         </div>
@@ -879,7 +879,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Hamo Client Version 1.3.9
+            Hamo Client Version 1.3.10
           </div>
         </div>
       </div>
@@ -1021,7 +1021,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Hamo Client Version 1.3.9
+          Hamo Client Version 1.3.10
         </div>
 
         {/* Bottom Navigation */}
@@ -1295,8 +1295,9 @@ const HamoClient = () => {
           </div>
         </div>
 
-        <div className="text-center py-3 text-xs text-gray-400">
-          Hamo Client Version 1.3.9
+        <div className="text-center py-4 text-xs text-gray-400 space-y-1">
+          <p>Hamo Client Version 1.3.10</p>
+          <p>Contributors: Chris Cheng, Anthropic Claude, Kerwin Du, Amy Chan</p>
         </div>
 
         {showDeleteConfirm && (
@@ -1442,7 +1443,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Hamo Client Version 1.3.9
+        Hamo Client Version 1.3.10
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
