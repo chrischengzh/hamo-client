@@ -120,9 +120,9 @@ const HamoClient = () => {
     }
   };
 
-  // Fetch avatars when entering Discover view
+  // v1.3.9: Fetch avatars every time entering Discover view (always refresh)
   useEffect(() => {
-    if (activeView === 'discover' && allProAvatars.length === 0) {
+    if (activeView === 'discover') {
       fetchAllAvatars();
     }
   }, [activeView]);
@@ -664,7 +664,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.8
+              Hamo Client Version 1.3.9
             </div>
           </div>
         </div>
@@ -803,7 +803,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.8
+              Hamo Client Version 1.3.9
             </div>
           </div>
         </div>
@@ -879,7 +879,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Hamo Client Version 1.3.8
+            Hamo Client Version 1.3.9
           </div>
         </div>
       </div>
@@ -1021,7 +1021,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Hamo Client Version 1.3.8
+          Hamo Client Version 1.3.9
         </div>
 
         {/* Bottom Navigation */}
@@ -1296,7 +1296,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Hamo Client Version 1.3.8
+          Hamo Client Version 1.3.9
         </div>
 
         {showDeleteConfirm && (
@@ -1442,7 +1442,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Hamo Client Version 1.3.8
+        Hamo Client Version 1.3.9
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
