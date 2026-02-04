@@ -1295,16 +1295,25 @@ const HamoClient = () => {
           </div>
         </div>
 
-        {/* Contributors Section - horizontal scrolling like Hamo Pro */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mx-4 mb-4">
-          <p className="text-sm text-gray-500 mb-3">Contributors</p>
-          <div className="overflow-x-auto">
-            <div className="flex space-x-6 min-w-max">
-              {['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan'].map((name, index) => (
-                <span key={index} className="text-gray-700 whitespace-nowrap">{name}</span>
+        {/* Contributors Section - marquee scrolling like Hamo Pro */}
+        <div className="bg-white rounded-xl shadow-md p-4 mx-4 mb-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-3">Contributors</h3>
+          <div className="overflow-hidden">
+            <div className="flex animate-marquee whitespace-nowrap">
+              {[...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan'], ...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan']].map((name, index) => (
+                <span key={index} className="mx-4 text-gray-400 font-medium">{name}</span>
               ))}
             </div>
           </div>
+          <style>{`
+            @keyframes marquee {
+              0% { transform: translateX(0%); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-marquee {
+              animation: marquee 15s linear infinite;
+            }
+          `}</style>
         </div>
 
         <div className="text-center py-4 text-xs text-gray-400">
