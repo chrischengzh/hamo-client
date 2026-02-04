@@ -1301,7 +1301,7 @@ const HamoClient = () => {
           <div className="overflow-hidden">
             <div className="flex animate-marquee whitespace-nowrap">
               {[...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan'], ...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan']].map((name, index) => (
-                <span key={index} className="mx-4 text-gray-400 font-medium">{name}</span>
+                <span key={index} className="mx-4 text-sm text-gray-400 font-medium">{name}</span>
               ))}
             </div>
           </div>
