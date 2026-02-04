@@ -1295,9 +1295,20 @@ const HamoClient = () => {
           </div>
         </div>
 
-        <div className="text-center py-4 text-xs text-gray-400 space-y-1">
+        {/* Contributors Section - horizontal scrolling like Hamo Pro */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mx-4 mb-4">
+          <p className="text-sm text-gray-500 mb-3">Contributors</p>
+          <div className="overflow-x-auto">
+            <div className="flex space-x-6 min-w-max">
+              {['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan'].map((name, index) => (
+                <span key={index} className="text-gray-700 whitespace-nowrap">{name}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center py-4 text-xs text-gray-400">
           <p>Hamo Client Version 1.3.10</p>
-          <p>Contributors: Chris Cheng, Anthropic Claude, Kerwin Du, Amy Chan</p>
         </div>
 
         {showDeleteConfirm && (
