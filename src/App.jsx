@@ -2,6 +2,33 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2 } from 'lucide-react';
 import apiService from './api';
 
+// Hamo Logo Component (Light version without text)
+const HamoLogo = ({ size = 40 }) => (
+  <svg width={size} height={size} viewBox="0 0 512 512">
+    <defs>
+      <mask id="hamo-smile-mask">
+        <rect x="0" y="0" width="512" height="512" fill="white"/>
+        <rect x="226" y="375" width="8" height="80" fill="black"/>
+        <rect x="280" y="375" width="8" height="80" fill="black"/>
+      </mask>
+    </defs>
+    {/* H: eyes (dot 1,2) */}
+    <circle cx="192" cy="125" r="40" fill="#002D72"/>
+    <circle cx="320" cy="125" r="40" fill="#002D72"/>
+    {/* A: nose dot */}
+    <circle cx="256" cy="205" r="12" fill="#002D72"/>
+    {/* H: ear dots (dot 3,4) + A: dash */}
+    <circle cx="88" cy="260" r="22" fill="#002D72"/>
+    <rect x="130" y="236" width="252" height="48" rx="14" fill="#002D72"/>
+    <circle cx="424" cy="260" r="22" fill="#002D72"/>
+    {/* M: 2 dashes */}
+    <rect x="152" y="318" width="96" height="40" rx="12" fill="#3572C6"/>
+    <rect x="264" y="318" width="96" height="40" rx="12" fill="#3572C6"/>
+    {/* O: 3-segment smile */}
+    <path d="M172,394 Q256,456 340,394 Z" fill="#74B3E8" mask="url(#hamo-smile-mask)"/>
+  </svg>
+);
+
 const HamoClient = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -664,7 +691,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.10
+              Hamo Client Version 1.4.6
             </div>
           </div>
         </div>
@@ -803,7 +830,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.10
+              Hamo Client Version 1.4.6
             </div>
           </div>
         </div>
@@ -879,7 +906,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Hamo Client Version 1.3.10
+            Hamo Client Version 1.4.6
           </div>
         </div>
       </div>
@@ -1021,7 +1048,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Hamo Client Version 1.3.10
+          Hamo Client Version 1.4.6
         </div>
 
         {/* Bottom Navigation */}
@@ -1317,7 +1344,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-4 text-xs text-gray-400">
-          <p>Hamo Client Version 1.3.10</p>
+          <p>Hamo Client Version 1.4.6</p>
         </div>
 
         {showDeleteConfirm && (
@@ -1379,9 +1406,12 @@ const HamoClient = () => {
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Avatars</h1>
-              <p className="text-sm text-gray-500">Hi, {currentClient?.nickname}</p>
+            <div className="flex items-center space-x-3">
+              <HamoLogo size={44} />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">My Avatars</h1>
+                <p className="text-xs text-gray-500">Avatar Therapist with AI Mind</p>
+              </div>
             </div>
             <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
               <User className="w-5 h-5 text-white" />
@@ -1463,7 +1493,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Hamo Client Version 1.3.10
+        Hamo Client Version 1.4.6
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
