@@ -354,20 +354,34 @@ const HamoClient = () => {
       setMessages(updatedMessages);
       setMessageInput('');
 
+      // Add loading indicator
+      const loadingMessage = {
+        id: 'loading',
+        sender: 'avatar',
+        text: '...',
+        isLoading: true,
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages([...updatedMessages, loadingMessage]);
+
       try {
         // Send message to backend and get REAL Gemini AI response
         const result = await apiService.sendMessage(currentSessionId, userMessageText);
 
         if (result.success) {
-          // Add AI response to UI
-          const aiResponse = {
-            id: Date.now() + 1,
-            sender: 'avatar',
-            text: result.response, // 🔥 REAL GEMINI RESPONSE
-            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-          };
+          // Split long response into multiple bubbles (2-3 sentences each)
+          const messageBubbles = splitIntoMessageBubbles(result.response);
 
-          const messagesWithResponse = [...updatedMessages, aiResponse];
+          // Create multiple AI response bubbles
+          const aiResponses = messageBubbles.map((bubble, index) => ({
+            id: Date.now() + index + 1,
+            sender: 'avatar',
+            text: bubble,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          }));
+
+          // Remove loading indicator and add AI responses
+          const messagesWithResponse = [...updatedMessages, ...aiResponses];
           setMessages(messagesWithResponse);
 
           // Update avatar's last chat time and messages
@@ -398,6 +412,23 @@ const HamoClient = () => {
   };
 
   // ✅ Removed hard-coded responses - now using real Gemini AI via backend API
+
+  // Helper function to split long messages into multiple bubbles (2-3 sentences each)
+  const splitIntoMessageBubbles = (text) => {
+    // Split by sentence endings (. ! ?)
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    const bubbles = [];
+
+    for (let i = 0; i < sentences.length; i += 2) {
+      // Group 2-3 sentences per bubble
+      const bubble = sentences.slice(i, i + 2).join(' ').trim();
+      if (bubble) {
+        bubbles.push(bubble);
+      }
+    }
+
+    return bubbles.length > 0 ? bubbles : [text];
+  };
 
   // v1.3.7: Connect with avatar via API (not just local)
   // Using backend field names for consistency
@@ -543,7 +574,7 @@ const HamoClient = () => {
 
   const selectAvatar = async (avatar) => {
     setSelectedAvatar(avatar);
-    setMessages(avatar.messages || []);
+    setMessages([]); // Clear messages initially, will load from backend
     setActiveView('chat');
 
     // Start a new session for this chat
@@ -899,21 +930,31 @@ const HamoClient = () => {
         <div className="flex-1 overflow-y-auto pb-4">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             {messages.map((msg) => (
-              <div 
+              <div
                 key={msg.id}
                 className={`flex ${msg.sender === 'client' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                  msg.sender === 'client' 
-                    ? 'bg-purple-500 text-white' 
+                  msg.sender === 'client'
+                    ? 'bg-purple-500 text-white'
                     : 'bg-white shadow-sm'
                 }`}>
-                  <p className="text-sm">{msg.text}</p>
-                  <p className={`text-xs mt-1 ${
-                    msg.sender === 'client' ? 'text-purple-100' : 'text-gray-400'
-                  }`}>
-                    {msg.time}
-                  </p>
+                  {msg.isLoading ? (
+                    <div className="flex space-x-2 py-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm">{msg.text}</p>
+                      <p className={`text-xs mt-1 ${
+                        msg.sender === 'client' ? 'text-purple-100' : 'text-gray-400'
+                      }`}>
+                        {msg.time}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
