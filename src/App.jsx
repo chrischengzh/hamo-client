@@ -593,12 +593,33 @@ const HamoClient = () => {
           // Load message history
           const historyResult = await apiService.getSessionMessages(sessionResult.sessionId);
           if (historyResult.success && historyResult.messages && historyResult.messages.length > 0) {
-            const formattedMessages = historyResult.messages.map(msg => ({
-              id: msg.id || Date.now(),
-              sender: msg.role === 'user' ? 'client' : 'avatar', // Backend uses 'role' not 'sender'
-              text: msg.content,
-              time: new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            }));
+            // Process messages and split long avatar responses into multiple bubbles
+            const formattedMessages = [];
+            historyResult.messages.forEach((msg, index) => {
+              const sender = msg.role === 'user' ? 'client' : 'avatar';
+              const time = new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+              if (sender === 'avatar') {
+                // Split avatar messages into multiple bubbles (2-3 sentences each)
+                const bubbles = splitIntoMessageBubbles(msg.content);
+                bubbles.forEach((bubble, bubbleIndex) => {
+                  formattedMessages.push({
+                    id: `${msg.id}-${bubbleIndex}`,
+                    sender: 'avatar',
+                    text: bubble,
+                    time: time
+                  });
+                });
+              } else {
+                // User messages stay as single bubble
+                formattedMessages.push({
+                  id: msg.id || `msg-${index}`,
+                  sender: 'client',
+                  text: msg.content,
+                  time: time
+                });
+              }
+            });
             setMessages(formattedMessages);
             console.log('📜 Loaded message history:', formattedMessages.length, 'messages');
           }
