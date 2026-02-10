@@ -495,6 +495,137 @@ class ApiService {
       };
     }
   }
+
+  // ============================================================
+  // CONVERSATION / CHAT ENDPOINTS (New in v1.4.0)
+  // ============================================================
+
+  // Start a new conversation session
+  async startSession(mindId, avatarId) {
+    try {
+      console.log('🔵 Starting conversation session:', { mindId, avatarId });
+
+      const response = await this.request(`/session/start?mind_id=${mindId}&avatar_id=${avatarId}`, {
+        method: 'POST',
+      });
+
+      console.log('✅ Session started:', response);
+
+      return {
+        success: true,
+        sessionId: response.session_id,
+        psvsPosition: response.initial_psvs_position,
+      };
+    } catch (error) {
+      console.error('❌ Failed to start session:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // Send a message in a conversation session
+  async sendMessage(sessionId, message) {
+    try {
+      console.log('🔵 Sending message:', { sessionId, message });
+
+      const response = await this.request(`/session/${sessionId}/message?message=${encodeURIComponent(message)}`, {
+        method: 'POST',
+      });
+
+      console.log('✅ Message sent, received response:', response);
+
+      return {
+        success: true,
+        response: response.response,
+        psvsPosition: response.psvs_position,
+      };
+    } catch (error) {
+      console.error('❌ Failed to send message:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // Get all messages in a conversation session
+  async getSessionMessages(sessionId) {
+    try {
+      console.log('🔵 Fetching session messages:', sessionId);
+
+      const response = await this.request(`/session/${sessionId}/messages`, {
+        method: 'GET',
+      });
+
+      console.log('✅ Session messages retrieved:', response);
+
+      return {
+        success: true,
+        messages: response.messages || [],
+      };
+    } catch (error) {
+      console.error('❌ Failed to fetch session messages:', error);
+
+      return {
+        success: false,
+        error: error.message,
+        messages: [],
+      };
+    }
+  }
+
+  // End a conversation session
+  async endSession(sessionId) {
+    try {
+      console.log('🔵 Ending session:', sessionId);
+
+      const response = await this.request(`/session/${sessionId}/end`, {
+        method: 'POST',
+      });
+
+      console.log('✅ Session ended:', response);
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('❌ Failed to end session:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // Get AI Mind by user and avatar ID
+  async getAIMind(userId, avatarId) {
+    try {
+      console.log('🔵 Fetching AI Mind:', { userId, avatarId });
+
+      const response = await this.request(`/mind/${userId}/${avatarId}`, {
+        method: 'GET',
+      });
+
+      console.log('✅ AI Mind retrieved:', response);
+
+      return {
+        success: true,
+        mind: response,
+      };
+    } catch (error) {
+      console.error('❌ Failed to fetch AI Mind:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
 }
 
 // Export singleton instance
