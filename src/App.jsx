@@ -39,6 +39,9 @@ const HamoClient = () => {
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [currentMindId, setCurrentMindId] = useState(null);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [authForm, setAuthForm] = useState({ email: '', password: '', nickname: '' });
   const [signUpInviteCode, setSignUpInviteCode] = useState('');
   const [invalidInviteCode, setInvalidInviteCode] = useState(false);
@@ -334,65 +337,67 @@ const HamoClient = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (messageInput.trim() && selectedAvatar) {
+  const handleSendMessage = async () => {
+    if (messageInput.trim() && selectedAvatar && currentSessionId) {
+      const userMessageText = messageInput;
+      setIsSendingMessage(true);
+
+      // Add user message to UI immediately
       const newMessage = {
         id: Date.now(),
         sender: 'client',
-        text: messageInput,
+        text: userMessageText,
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       };
 
       const updatedMessages = [...messages, newMessage];
       setMessages(updatedMessages);
-
-      const updatedAvatars = connectedAvatars.map(a => {
-        if (a.id === selectedAvatar.id) {
-          return {
-            ...a,
-            last_chat_time: new Date().toISOString(),
-            messages: updatedMessages
-          };
-        }
-        return a;
-      });
-
-      setConnectedAvatars(updatedAvatars);
       setMessageInput('');
 
-      setTimeout(() => {
-        const aiResponse = {
-          id: Date.now() + 1,
-          sender: 'avatar',
-          text: generateAIResponse(messageInput),
-          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        };
+      try {
+        // Send message to backend and get REAL Gemini AI response
+        const result = await apiService.sendMessage(currentSessionId, userMessageText);
 
-        const messagesWithResponse = [...updatedMessages, aiResponse];
-        setMessages(messagesWithResponse);
+        if (result.success) {
+          // Add AI response to UI
+          const aiResponse = {
+            id: Date.now() + 1,
+            sender: 'avatar',
+            text: result.response, // 🔥 REAL GEMINI RESPONSE
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          };
 
-        const avatarsWithResponse = updatedAvatars.map(a => {
-          if (a.id === selectedAvatar.id) {
-            return { ...a, messages: messagesWithResponse };
-          }
-          return a;
-        });
+          const messagesWithResponse = [...updatedMessages, aiResponse];
+          setMessages(messagesWithResponse);
 
-        setConnectedAvatars(avatarsWithResponse);
-      }, 1500);
+          // Update avatar's last chat time and messages
+          const updatedAvatars = connectedAvatars.map(a => {
+            if (a.id === selectedAvatar.id) {
+              return {
+                ...a,
+                last_chat_time: new Date().toISOString(),
+                messages: messagesWithResponse
+              };
+            }
+            return a;
+          });
+          setConnectedAvatars(updatedAvatars);
+
+          console.log('✅ Real AI response received:', result.response);
+        } else {
+          console.error('Failed to get AI response:', result.error);
+          alert('Failed to send message. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please check your connection.');
+      } finally {
+        setIsSendingMessage(false);
+      }
     }
   };
 
-  const generateAIResponse = (userMessage) => {
-    const responses = [
-      "I hear what you're saying. Can you tell me more about how that makes you feel?",
-      "That's an important observation. What do you think is driving those feelings?",
-      "Thank you for sharing that with me. How long have you been experiencing this?",
-      "I understand this is difficult. What would help you feel better about this situation?",
-      "That sounds challenging. What support do you have around you right now?"
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
+  // ✅ Removed hard-coded responses - now using real Gemini AI via backend API
 
   // v1.3.7: Connect with avatar via API (not just local)
   // Using backend field names for consistency
@@ -536,10 +541,40 @@ const HamoClient = () => {
     }
   };
 
-  const selectAvatar = (avatar) => {
+  const selectAvatar = async (avatar) => {
     setSelectedAvatar(avatar);
     setMessages(avatar.messages || []);
     setActiveView('chat');
+
+    // Start a new session for this chat
+    try {
+      // Get AI Mind for this client-avatar connection
+      const mindResult = await apiService.getAIMind(currentClient.id, avatar.id);
+      if (mindResult.success && mindResult.mind) {
+        setCurrentMindId(mindResult.mind.id);
+
+        // Start a session
+        const sessionResult = await apiService.startSession(mindResult.mind.id, avatar.id);
+        if (sessionResult.success) {
+          setCurrentSessionId(sessionResult.sessionId);
+          console.log('✅ Session started:', sessionResult.sessionId);
+
+          // Load message history
+          const historyResult = await apiService.getSessionMessages(sessionResult.sessionId);
+          if (historyResult.success && historyResult.messages) {
+            const formattedMessages = historyResult.messages.map(msg => ({
+              id: msg.id || Date.now(),
+              sender: msg.sender === 'user' ? 'client' : 'avatar',
+              text: msg.content,
+              time: new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            }));
+            setMessages(formattedMessages);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to start session:', error);
+    }
   };
 
   const goBackToAvatarList = () => {
