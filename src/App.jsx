@@ -28,6 +28,9 @@ const HamoClient = () => {
   const [selectedProAvatar, setSelectedProAvatar] = useState(null);
   const [allProAvatars, setAllProAvatars] = useState([]);
   const [isLoadingAvatars, setIsLoadingAvatars] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [currentMindId, setCurrentMindId] = useState(null);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const chatEndRef = useRef(null);
 
   // Helper function to transform avatar data from API to UI format
@@ -307,64 +310,74 @@ const HamoClient = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (messageInput.trim() && selectedAvatar) {
+  const handleSendMessage = async () => {
+    if (messageInput.trim() && selectedAvatar && currentSessionId) {
+      const userMessage = messageInput.trim();
+
+      // Add user message to UI immediately
       const newMessage = {
         id: Date.now(),
         sender: 'client',
-        text: messageInput,
+        text: userMessage,
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       };
 
-      const updatedMessages = [...messages, newMessage];
-      setMessages(updatedMessages);
+      setMessages(prev => [...prev, newMessage]);
+      setMessageInput('');  // Clear input immediately
+      setIsSendingMessage(true);  // Show loading state
 
-      const updatedAvatars = connectedAvatars.map(a => {
-        if (a.id === selectedAvatar.id) {
-          return {
-            ...a,
-            last_chat_time: new Date().toISOString(),
-            messages: updatedMessages
+      try {
+        // Send message to backend and get AI response
+        const result = await apiService.sendMessage(currentSessionId, userMessage);
+
+        if (result.success) {
+          // Add AI response to messages
+          const aiResponse = {
+            id: Date.now() + 1,
+            sender: 'avatar',
+            text: result.response,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
           };
+
+          setMessages(prev => [...prev, aiResponse]);
+
+          // Update avatar's last chat time
+          const updatedAvatars = connectedAvatars.map(a => {
+            if (a.id === selectedAvatar.id) {
+              return {
+                ...a,
+                last_chat_time: new Date().toISOString(),
+                messages: [...messages, newMessage, aiResponse]
+              };
+            }
+            return a;
+          });
+
+          setConnectedAvatars(updatedAvatars);
+        } else {
+          // Show error message if API call fails
+          const errorMessage = {
+            id: Date.now() + 1,
+            sender: 'avatar',
+            text: 'Sorry, I encountered an error. Please try again.',
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          };
+          setMessages(prev => [...prev, errorMessage]);
         }
-        return a;
-      });
-
-      setConnectedAvatars(updatedAvatars);
-      setMessageInput('');
-
-      setTimeout(() => {
-        const aiResponse = {
+      } catch (error) {
+        console.error('Error sending message:', error);
+        // Show error message
+        const errorMessage = {
           id: Date.now() + 1,
           sender: 'avatar',
-          text: generateAIResponse(messageInput),
+          text: 'Sorry, I encountered an error. Please try again.',
           time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         };
-
-        const messagesWithResponse = [...updatedMessages, aiResponse];
-        setMessages(messagesWithResponse);
-
-        const avatarsWithResponse = updatedAvatars.map(a => {
-          if (a.id === selectedAvatar.id) {
-            return { ...a, messages: messagesWithResponse };
-          }
-          return a;
-        });
-
-        setConnectedAvatars(avatarsWithResponse);
-      }, 1500);
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsSendingMessage(false);
+      }
     }
-  };
-
-  const generateAIResponse = (userMessage) => {
-    const responses = [
-      "I hear what you're saying. Can you tell me more about how that makes you feel?",
-      "That's an important observation. What do you think is driving those feelings?",
-      "Thank you for sharing that with me. How long have you been experiencing this?",
-      "I understand this is difficult. What would help you feel better about this situation?",
-      "That sounds challenging. What support do you have around you right now?"
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   // v1.3.7: Connect with avatar via API (not just local)
@@ -509,10 +522,65 @@ const HamoClient = () => {
     }
   };
 
-  const selectAvatar = (avatar) => {
+  const selectAvatar = async (avatar) => {
     setSelectedAvatar(avatar);
-    setMessages(avatar.messages || []);
     setActiveView('chat');
+    setMessages([]);  // Clear old messages
+    setIsSendingMessage(true);  // Show loading
+
+    try {
+      // Get the AI Mind for this user-avatar pair
+      const mindResult = await apiService.getAIMind(currentClient.id, avatar.id);
+
+      if (mindResult.success && mindResult.mind) {
+        const mindId = mindResult.mind.id;
+        setCurrentMindId(mindId);
+
+        // Start a new conversation session
+        const sessionResult = await apiService.startSession(mindId, avatar.id);
+
+        if (sessionResult.success) {
+          setCurrentSessionId(sessionResult.sessionId);
+
+          // Load conversation history
+          const historyResult = await apiService.getSessionMessages(sessionResult.sessionId);
+
+          if (historyResult.success && historyResult.messages.length > 0) {
+            // Transform backend messages to UI format
+            const transformedMessages = historyResult.messages.map(msg => ({
+              id: msg.id,
+              sender: msg.role === 'user' ? 'client' : 'avatar',
+              text: msg.content,
+              time: new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            }));
+            setMessages(transformedMessages);
+          } else {
+            // No history, show welcome message
+            setMessages([{
+              id: Date.now(),
+              sender: 'avatar',
+              text: avatar.welcome_message || `Welcome! I'm ${avatar.name}. How are you feeling today?`,
+              time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            }]);
+          }
+        } else {
+          console.error('Failed to start session:', sessionResult.error);
+          // Show welcome message as fallback
+          setMessages([{
+            id: Date.now(),
+            sender: 'avatar',
+            text: `Welcome! I'm ${avatar.name}. How are you feeling today?`,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          }]);
+        }
+      } else {
+        console.error('Failed to get AI Mind:', mindResult.error);
+      }
+    } catch (error) {
+      console.error('Error in selectAvatar:', error);
+    } finally {
+      setIsSendingMessage(false);
+    }
   };
 
   const goBackToAvatarList = () => {
@@ -664,7 +732,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.10
+              Hamo Client Version 1.4.0
             </div>
           </div>
         </div>
@@ -803,7 +871,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.3.10
+              Hamo Client Version 1.4.0
             </div>
           </div>
         </div>
@@ -872,9 +940,18 @@ const HamoClient = () => {
               />
               <button
                 onClick={handleSendMessage}
-                className="p-3 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition"
+                disabled={isSendingMessage || !messageInput.trim()}
+                className={`p-3 rounded-full transition ${
+                  isSendingMessage || !messageInput.trim()
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-purple-500 text-white hover:bg-purple-600'
+                }`}
               >
-                <Send className="w-5 h-5" />
+                {isSendingMessage ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
               </button>
             </div>
           </div>
