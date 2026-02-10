@@ -592,14 +592,15 @@ const HamoClient = () => {
 
           // Load message history
           const historyResult = await apiService.getSessionMessages(sessionResult.sessionId);
-          if (historyResult.success && historyResult.messages) {
+          if (historyResult.success && historyResult.messages && historyResult.messages.length > 0) {
             const formattedMessages = historyResult.messages.map(msg => ({
               id: msg.id || Date.now(),
-              sender: msg.sender === 'user' ? 'client' : 'avatar',
+              sender: msg.role === 'user' ? 'client' : 'avatar', // Backend uses 'role' not 'sender'
               text: msg.content,
               time: new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
             }));
             setMessages(formattedMessages);
+            console.log('📜 Loaded message history:', formattedMessages.length, 'messages');
           }
         }
       }

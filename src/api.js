@@ -565,7 +565,7 @@ class ApiService {
 
       return {
         success: true,
-        messages: response.messages || [],
+        messages: Array.isArray(response) ? response : [], // Backend returns array directly
       };
     } catch (error) {
       console.error('❌ Failed to fetch session messages:', error);
