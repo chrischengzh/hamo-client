@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2 } from 'lucide-react';
+import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2, Eye, EyeOff } from 'lucide-react';
 import apiService from './api';
 
 // Hamo Logo Component (Light version without text)
@@ -42,6 +42,7 @@ const HamoClient = () => {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [currentMindId, setCurrentMindId] = useState(null);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isProVisible, setIsProVisible] = useState(true); // v1.4.8: Pro visibility toggle (default: visible)
   const [authForm, setAuthForm] = useState({ email: '', password: '', nickname: '' });
   const [signUpInviteCode, setSignUpInviteCode] = useState('');
   const [invalidInviteCode, setInvalidInviteCode] = useState(false);
@@ -553,6 +554,24 @@ const HamoClient = () => {
     setSelectedAvatar(null);
   };
 
+  // v1.4.8: Toggle Pro visibility for current session
+  const handleToggleProVisibility = async () => {
+    const newVisibility = !isProVisible;
+    setIsProVisible(newVisibility);
+
+    // Update session visibility on backend
+    if (currentSessionId) {
+      try {
+        await apiService.updateSessionVisibility(currentSessionId, newVisibility);
+        console.log('✅ Pro visibility updated:', newVisibility);
+      } catch (error) {
+        console.error('❌ Failed to update Pro visibility:', error);
+        // Revert on error
+        setIsProVisible(!newVisibility);
+      }
+    }
+  };
+
   const handleDeleteAccount = async () => {
     setIsLoading(true);
     try {
@@ -932,7 +951,7 @@ const HamoClient = () => {
         <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-3xl mx-auto px-4 py-4">
             <div className="flex items-center space-x-3">
-              <button 
+              <button
                 onClick={goBackToAvatarList}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"
               >
@@ -945,6 +964,28 @@ const HamoClient = () => {
                 <h2 className="font-semibold text-gray-900">{selectedAvatar.name}</h2>
                 <p className="text-xs text-gray-500">{selectedAvatar.pro_name}</p>
               </div>
+              {/* v1.4.8: Pro Visibility Toggle */}
+              <button
+                onClick={handleToggleProVisibility}
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium transition ${
+                  isProVisible
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+                title={isProVisible ? '咨询师可见' : '咨询师不可见'}
+              >
+                {isProVisible ? (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    <span>咨询师可见</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-4 h-4" />
+                    <span>咨询师不可见</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

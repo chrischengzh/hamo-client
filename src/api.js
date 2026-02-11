@@ -602,6 +602,33 @@ class ApiService {
     }
   }
 
+  // v1.4.8: Update session visibility (whether Pro can see the conversation)
+  async updateSessionVisibility(sessionId, isProVisible) {
+    try {
+      console.log('🔵 Updating session visibility:', { sessionId, isProVisible });
+
+      const response = await this.request(`/session/${sessionId}/visibility`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          pro_visible: isProVisible,
+        }),
+      });
+
+      console.log('✅ Session visibility updated:', response);
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('❌ Failed to update session visibility:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
   // Get AI Mind by user and avatar ID
   async getAIMind(userId, avatarId) {
     try {
