@@ -972,17 +972,17 @@ const HamoClient = () => {
                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
-                title={isProVisible ? '咨询师可见' : '咨询师不可见'}
+                title={isProVisible ? 'Visible to Pro' : 'Hidden from Pro'}
               >
                 {isProVisible ? (
                   <>
                     <Eye className="w-4 h-4" />
-                    <span>咨询师可见</span>
+                    <span>Visible to Pro</span>
                   </>
                 ) : (
                   <>
                     <EyeOff className="w-4 h-4" />
-                    <span>咨询师不可见</span>
+                    <span>Hidden from Pro</span>
                   </>
                 )}
               </button>
