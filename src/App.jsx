@@ -664,9 +664,7 @@ const HamoClient = () => {
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-10 h-10 text-white" />
-              </div>
+              <HamoLogo size={80} />
             </div>
             <h1 className="text-3xl font-bold text-center text-gray-900 mb-4">Welcome to Hamo</h1>
             {invitingPro && (
@@ -812,9 +810,7 @@ const HamoClient = () => {
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-10 h-10 text-white" />
-              </div>
+              <HamoLogo size={80} />
             </div>
             <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Hamo</h1>
             <p className="text-center text-gray-500 mb-8">Your Personal Therapy Companion</p>
