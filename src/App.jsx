@@ -944,7 +944,8 @@ const HamoClient = () => {
   if (activeView === 'chat' && selectedAvatar) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex flex-col">
-        <div className="bg-white shadow-sm border-b border-gray-200">
+        {/* v1.4.8: Fixed header bar */}
+        <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-10">
           <div className="max-w-3xl mx-auto px-4 py-4">
             <div className="flex items-center space-x-3">
               <button
@@ -986,7 +987,8 @@ const HamoClient = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto pb-4">
+        {/* Add padding-top to account for fixed header */}
+        <div className="flex-1 overflow-y-auto pb-4 pt-20">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             {messages.map((msg) => (
               <div
