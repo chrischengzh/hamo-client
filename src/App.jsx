@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2, Eye, EyeOff } from 'lucide-react';
 import apiService from './api';
+import { translations, LanguageSwitcher, useTranslation } from './i18n';
 
 // Hamo Logo Component (Light version without text)
 const HamoLogo = ({ size = 40 }) => (
@@ -30,6 +31,20 @@ const HamoLogo = ({ size = 40 }) => (
 );
 
 const HamoClient = () => {
+  // v1.5.0: Language state (default to browser language or 'en')
+  const [language, setLanguage] = useState(() => {
+    const savedLang = localStorage.getItem('hamo-language');
+    if (savedLang) return savedLang;
+    const browserLang = navigator.language.toLowerCase();
+    return browserLang.startsWith('zh') ? 'zh' : 'en';
+  });
+  const { t } = useTranslation(language);
+
+  // Save language preference
+  useEffect(() => {
+    localStorage.setItem('hamo-language', language);
+  }, [language]);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [authMode, setAuthMode] = useState('signin');
@@ -653,10 +668,14 @@ const HamoClient = () => {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl p-8">
+            {/* v1.5.0: Language Switcher */}
+            <div className="flex justify-end mb-4">
+              <LanguageSwitcher language={language} setLanguage={setLanguage} />
+            </div>
             <div className="flex items-center justify-center mb-6">
               <HamoLogo size={80} />
             </div>
-            <h1 className="text-3xl font-bold text-center text-gray-900 mb-4">Welcome to Hamo</h1>
+            <h1 className="text-3xl font-bold text-center text-gray-900 mb-4">{t('welcomeToHamo')}</h1>
             {invitingPro && (
               <div className="mb-6 p-4 bg-purple-50 rounded-lg">
                 <p className="text-sm text-gray-600 mb-2">You've been invited by:</p>
@@ -678,7 +697,7 @@ const HamoClient = () => {
                 }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signin' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
-                Sign In
+                {t('signIn')}
               </button>
               <button
                 onClick={() => {
@@ -690,7 +709,7 @@ const HamoClient = () => {
                 }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signup' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
-                Sign Up
+                {t('signUp')}
               </button>
             </div>
             <div className="space-y-4">
@@ -704,11 +723,11 @@ const HamoClient = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-sm font-medium text-red-800">
-                        {invalidInviteCode ? 'Invalid Invitation Code' : 'Error'}
+                        {invalidInviteCode ? t('invalidInvitationCode') : t('error')}
                       </h3>
                       <p className="text-sm text-red-700 mt-1">
                         {invalidInviteCode
-                          ? 'Please check with your therapist for the correct invitation code.'
+                          ? t('checkWithTherapist')
                           : authError}
                       </p>
                     </div>
@@ -717,42 +736,42 @@ const HamoClient = () => {
               )}
               {authMode === 'signup' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nickname</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('nickname')}</label>
                   <input
                     type="text"
                     value={authForm.nickname}
                     onChange={(e) => setAuthForm({ ...authForm, nickname: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Your display name"
+                    placeholder={t('yourDisplayName')}
                     disabled={isLoading}
                   />
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
                 <input
                   type="email"
                   value={authForm.email}
                   onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="your@email.com"
+                  placeholder={t('emailPlaceholder')}
                   disabled={isLoading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('password')}</label>
                 <input
                   type="password"
                   value={authForm.password}
                   onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="••••••••"
+                  placeholder={t('passwordPlaceholder')}
                   disabled={isLoading}
                 />
               </div>
               {authMode === 'signup' && !invitingPro && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Invitation Code <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('invitationCode')} <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={signUpInviteCode}
@@ -764,10 +783,10 @@ const HamoClient = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                       invalidInviteCode ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Enter code from your therapist"
+                    placeholder={t('enterCodeFromTherapist')}
                     disabled={isLoading}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Required - Get this code from your Pro therapist</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('invitationCodeRequired')}</p>
                 </div>
               )}
               <button
@@ -778,15 +797,15 @@ const HamoClient = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>{authMode === 'signin' ? 'Signing In...' : 'Creating Account...'}</span>
+                    <span>{authMode === 'signin' ? t('signingIn') : t('creatingAccount')}</span>
                   </>
                 ) : (
-                  <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                  <span>{authMode === 'signin' ? t('signIn') : t('createAccount')}</span>
                 )}
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.5.0
+              {t('version')} 1.5.0
             </div>
           </div>
         </div>
@@ -799,11 +818,15 @@ const HamoClient = () => {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl p-8">
+            {/* v1.5.0: Language Switcher */}
+            <div className="flex justify-end mb-4">
+              <LanguageSwitcher language={language} setLanguage={setLanguage} />
+            </div>
             <div className="flex items-center justify-center mb-6">
               <HamoLogo size={80} />
             </div>
-            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Hamo</h1>
-            <p className="text-center text-gray-500 mb-8">Your Personal Therapy Companion</p>
+            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">{t('hamo')}</h1>
+            <p className="text-center text-gray-500 mb-8">{t('yourPersonalTherapyCompanion')}</p>
             <div className="flex space-x-2 mb-6">
               <button
                 onClick={() => {
@@ -815,7 +838,7 @@ const HamoClient = () => {
                 }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signin' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
-                Sign In
+                {t('signIn')}
               </button>
               <button
                 onClick={() => {
@@ -827,7 +850,7 @@ const HamoClient = () => {
                 }}
                 className={`flex-1 py-2 rounded-lg font-medium transition ${authMode === 'signup' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
-                Sign Up
+                {t('signUp')}
               </button>
             </div>
             <div className="space-y-4">
@@ -841,11 +864,11 @@ const HamoClient = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-sm font-medium text-red-800">
-                        {invalidInviteCode ? 'Invalid Invitation Code' : 'Error'}
+                        {invalidInviteCode ? t('invalidInvitationCode') : t('error')}
                       </h3>
                       <p className="text-sm text-red-700 mt-1">
                         {invalidInviteCode
-                          ? 'Please check with your therapist for the correct invitation code.'
+                          ? t('checkWithTherapist')
                           : authError}
                       </p>
                     </div>
@@ -854,42 +877,42 @@ const HamoClient = () => {
               )}
               {authMode === 'signup' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nickname</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('nickname')}</label>
                   <input
                     type="text"
                     value={authForm.nickname}
                     onChange={(e) => setAuthForm({ ...authForm, nickname: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Your display name"
+                    placeholder={t('yourDisplayName')}
                     disabled={isLoading}
                   />
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
                 <input
                   type="email"
                   value={authForm.email}
                   onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="your@email.com"
+                  placeholder={t('emailPlaceholder')}
                   disabled={isLoading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('password')}</label>
                 <input
                   type="password"
                   value={authForm.password}
                   onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="••••••••"
+                  placeholder={t('passwordPlaceholder')}
                   disabled={isLoading}
                 />
               </div>
               {authMode === 'signup' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Invitation Code <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('invitationCode')} <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={signUpInviteCode}
@@ -901,10 +924,10 @@ const HamoClient = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                       invalidInviteCode ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Enter code from your therapist"
+                    placeholder={t('enterCodeFromTherapist')}
                     disabled={isLoading}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Required - Get this code from your Pro therapist</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('invitationCodeRequired')}</p>
                 </div>
               )}
               <button
@@ -915,15 +938,15 @@ const HamoClient = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>{authMode === 'signin' ? 'Signing In...' : 'Creating Account...'}</span>
+                    <span>{authMode === 'signin' ? t('signingIn') : t('creatingAccount')}</span>
                   </>
                 ) : (
-                  <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                  <span>{authMode === 'signin' ? t('signIn') : t('createAccount')}</span>
                 )}
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              Hamo Client Version 1.5.0
+              {t('version')} 1.5.0
             </div>
           </div>
         </div>
@@ -959,17 +982,17 @@ const HamoClient = () => {
                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
-                title={isProVisible ? 'Visible to Pro' : 'Hidden from Pro'}
+                title={isProVisible ? t('visibleToPro') : t('hiddenFromPro')}
               >
                 {isProVisible ? (
                   <>
                     <Eye className="w-4 h-4" />
-                    <span>Visible to Pro</span>
+                    <span>{t('visibleToPro')}</span>
                   </>
                 ) : (
                   <>
                     <EyeOff className="w-4 h-4" />
-                    <span>Hidden from Pro</span>
+                    <span>{t('hiddenFromPro')}</span>
                   </>
                 )}
               </button>
@@ -1021,7 +1044,7 @@ const HamoClient = () => {
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Type your message..."
+                placeholder={t('typeYourMessage')}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <button
@@ -1033,7 +1056,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            Hamo Client Version 1.5.0
+            {t('version')} 1.5.0
           </div>
         </div>
       </div>
@@ -1047,8 +1070,8 @@ const HamoClient = () => {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
         <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-3xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Discover Therapists</h1>
-            
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('discoverTherapists')}</h1>
+
             {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -1056,7 +1079,7 @@ const HamoClient = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name, specialty, or therapy type..."
+                placeholder={t('searchPlaceholder')}
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
@@ -1067,7 +1090,7 @@ const HamoClient = () => {
           {/* Popular Specialties - dynamically from avatar data */}
           {getUniqueSpecialties().length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Popular Specialties</h2>
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">{t('popularSpecialties')}</h2>
               <div className="flex flex-wrap gap-2">
                 {getUniqueSpecialties().map((specialty) => (
                   <button
@@ -1092,19 +1115,19 @@ const HamoClient = () => {
           {/* Recommended Pro Avatars */}
           <div>
             <h2 className="text-sm font-semibold text-gray-700 mb-3">
-              {searchQuery || selectedTag ? 'Search Results' : 'Recommended for You'}
+              {searchQuery || selectedTag ? t('searchResults') : t('recommendedForYou')}
             </h2>
 
             {isLoadingAvatars ? (
               <div className="bg-white rounded-xl shadow-sm p-12 text-center">
                 <Loader2 className="w-12 h-12 text-purple-500 mx-auto mb-4 animate-spin" />
-                <p className="text-gray-500">Loading therapists...</p>
+                <p className="text-gray-500">{t('loadingTherapists')}</p>
               </div>
             ) : filteredAvatars.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm p-12 text-center">
                 <Compass className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No therapists found</h3>
-                <p className="text-gray-500 mb-6">{allProAvatars.length === 0 ? 'No therapists available yet' : 'Try adjusting your search or filters'}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('noTherapistsFound')}</h3>
+                <p className="text-gray-500 mb-6">{allProAvatars.length === 0 ? t('noTherapistsAvailable') : t('tryAdjustingSearch')}</p>
                 {(searchQuery || selectedTag) && (
                   <button
                     onClick={() => {
@@ -1113,7 +1136,7 @@ const HamoClient = () => {
                     }}
                     className="text-purple-500 hover:text-purple-600 font-medium"
                   >
-                    Clear filters
+                    {t('clearFilters')}
                   </button>
                 )}
               </div>
@@ -1131,8 +1154,8 @@ const HamoClient = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-lg text-gray-900">{avatar.name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{avatar.specialty || 'N/A'}</p>
-                        <p className="text-xs text-gray-500 mb-3">{avatar.therapeutic_approaches && avatar.therapeutic_approaches.length > 0 ? avatar.therapeutic_approaches.join(' • ') : 'N/A'}</p>
+                        <p className="text-sm text-gray-600 mb-2">{avatar.specialty || t('na')}</p>
+                        <p className="text-xs text-gray-500 mb-3">{avatar.therapeutic_approaches && avatar.therapeutic_approaches.length > 0 ? avatar.therapeutic_approaches.join(' • ') : t('na')}</p>
 
                         <div className="flex items-center space-x-4 text-xs text-gray-600 mb-3">
                           <div className="flex items-center space-x-1">
@@ -1142,7 +1165,7 @@ const HamoClient = () => {
                           {avatar.sessions > 0 && (
                             <div className="flex items-center space-x-1">
                               <Award className="w-4 h-4" />
-                              <span>{avatar.sessions} sessions</span>
+                              <span>{avatar.sessions} {t('sessions')}</span>
                             </div>
                           )}
                           {avatar.experience && avatar.experience !== 'N/A' && (
@@ -1175,7 +1198,7 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-3 text-xs text-gray-400">
-          Hamo Client Version 1.5.0
+          {t('version')} 1.5.0
         </div>
 
         {/* Bottom Navigation */}
@@ -1187,21 +1210,21 @@ const HamoClient = () => {
                 className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
               >
                 <MessageSquare className="w-6 h-6" />
-                <span className="text-xs">Chats</span>
+                <span className="text-xs">{t('chats')}</span>
               </button>
               <button
                 onClick={() => setActiveView('discover')}
                 className="flex flex-col items-center space-y-1 px-6 py-2 text-purple-500"
               >
                 <Compass className="w-6 h-6" />
-                <span className="text-xs">Discover</span>
+                <span className="text-xs">{t('discover')}</span>
               </button>
               <button
                 onClick={() => setActiveView('settings')}
                 className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
               >
                 <Settings className="w-6 h-6" />
-                <span className="text-xs">Settings</span>
+                <span className="text-xs">{t('settings')}</span>
               </button>
             </div>
           </div>
@@ -1232,18 +1255,18 @@ const HamoClient = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-1">Specialty</h4>
-                    <p className="text-gray-900">{selectedProAvatar.specialty || 'N/A'}</p>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-1">{t('specialty')}</h4>
+                    <p className="text-gray-900">{selectedProAvatar.specialty || t('na')}</p>
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-1">Therapeutic Approach</h4>
-                    <p className="text-gray-900">{selectedProAvatar.therapeutic_approaches && selectedProAvatar.therapeutic_approaches.length > 0 ? selectedProAvatar.therapeutic_approaches.join(' • ') : 'N/A'}</p>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-1">{t('therapeuticApproach')}</h4>
+                    <p className="text-gray-900">{selectedProAvatar.therapeutic_approaches && selectedProAvatar.therapeutic_approaches.length > 0 ? selectedProAvatar.therapeutic_approaches.join(' • ') : t('na')}</p>
                   </div>
 
                   {selectedProAvatar.about && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-1">About</h4>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-1">{t('about')}</h4>
                       <p className="text-gray-700 text-sm">{selectedProAvatar.about}</p>
                     </div>
                   )}
@@ -1253,7 +1276,7 @@ const HamoClient = () => {
                       <Star className="w-5 h-5 text-yellow-400 fill-current" />
                       <div>
                         <p className="text-lg font-bold text-gray-900">{selectedProAvatar.rating || 5.0}</p>
-                        <p className="text-xs text-gray-500">Rating</p>
+                        <p className="text-xs text-gray-500">{t('rating')}</p>
                       </div>
                     </div>
                     {selectedProAvatar.sessions > 0 && (
@@ -1261,7 +1284,7 @@ const HamoClient = () => {
                         <Award className="w-5 h-5 text-purple-500" />
                         <div>
                           <p className="text-lg font-bold text-gray-900">{selectedProAvatar.sessions}</p>
-                          <p className="text-xs text-gray-500">Sessions</p>
+                          <p className="text-xs text-gray-500">{t('sessions')}</p>
                         </div>
                       </div>
                     )}
@@ -1270,7 +1293,7 @@ const HamoClient = () => {
                         <Clock className="w-5 h-5 text-blue-500" />
                         <div>
                           <p className="text-lg font-bold text-gray-900">{selectedProAvatar.experience}</p>
-                          <p className="text-xs text-gray-500">Experience</p>
+                          <p className="text-xs text-gray-500">{t('experience')}</p>
                         </div>
                       </div>
                     )}
@@ -1278,7 +1301,7 @@ const HamoClient = () => {
 
                   {selectedProAvatar.specializations && selectedProAvatar.specializations.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Specializations</h4>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">{t('specializations')}</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedProAvatar.specializations.map((spec, index) => (
                           <span
@@ -1298,13 +1321,13 @@ const HamoClient = () => {
                     onClick={() => handleAddProAvatar(selectedProAvatar)}
                     className="flex-1 bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition font-medium"
                   >
-                    Add to My Therapists
+                    {t('addToMyTherapists')}
                   </button>
                   <button
                     onClick={() => setSelectedProAvatar(null)}
                     className="flex-1 bg-gray-200 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium"
                   >
-                    Close
+                    {t('close')}
                   </button>
                 </div>
               </div>
@@ -1320,29 +1343,29 @@ const HamoClient = () => {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
         <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-3xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('settings')}</h1>
           </div>
         </div>
 
         <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Connect New Avatar</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('connectNewAvatar')}</h2>
             <div className="space-y-4">
               <button
                 onClick={() => setShowInviteInput(!showInviteInput)}
                 className="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-purple-500 text-purple-500 rounded-lg hover:bg-purple-50 transition"
               >
                 <Plus className="w-5 h-5" />
-                <span>Add with Invite Code</span>
+                <span>{t('addWithInviteCode')}</span>
               </button>
-              
+
               {showInviteInput && (
                 <div className="space-y-3">
                   <input
                     type="text"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
-                    placeholder="Enter invite code"
+                    placeholder={t('enterInviteCode')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                   <div className="flex space-x-2">
@@ -1350,13 +1373,13 @@ const HamoClient = () => {
                       onClick={handleAddAvatar}
                       className="flex-1 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
                     >
-                      Connect
+                      {t('connect')}
                     </button>
                     <button
                       onClick={() => setShowInviteInput(false)}
                       className="flex-1 bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
                     >
-                      Cancel
+                      {t('cancel')}
                     </button>
                   </div>
                 </div>
@@ -1366,7 +1389,7 @@ const HamoClient = () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Profile Settings</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('profileSettings')}</h2>
             <div className="space-y-4">
               <div className="flex items-center space-x-4 mb-6">
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
@@ -1374,12 +1397,12 @@ const HamoClient = () => {
                 </div>
                 <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                   <Upload className="w-4 h-4" />
-                  <span className="text-sm">Change Avatar</span>
+                  <span className="text-sm">{t('changeAvatar')}</span>
                 </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nickname</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('nickname')}</label>
                 <input
                   type="text"
                   value={settingsForm.nickname}
@@ -1390,7 +1413,7 @@ const HamoClient = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
                 <input
                   type="email"
                   value={settingsForm.email}
@@ -1401,23 +1424,23 @@ const HamoClient = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('currentPassword')}</label>
                 <input
                   type="password"
                   value={settingsForm.password}
                   onChange={(e) => setSettingsForm({ ...settingsForm, password: e.target.value })}
-                  placeholder="••••••••"
+                  placeholder={t('passwordPlaceholder')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('newPassword')}</label>
                 <input
                   type="password"
                   value={settingsForm.newPassword}
                   onChange={(e) => setSettingsForm({ ...settingsForm, newPassword: e.target.value })}
-                  placeholder="••••••••"
+                  placeholder={t('passwordPlaceholder')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
@@ -1426,7 +1449,7 @@ const HamoClient = () => {
                 onClick={handleUpdateSettings}
                 className="w-full bg-purple-500 text-white px-4 py-3 rounded-lg hover:bg-purple-600 transition font-medium"
               >
-                Save Changes
+                {t('saveChanges')}
               </button>
             </div>
           </div>
@@ -1437,21 +1460,21 @@ const HamoClient = () => {
               className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
               <LogOut className="w-5 h-5" />
-              <span>Log Out</span>
+              <span>{t('logOut')}</span>
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition"
             >
               <Trash2 className="w-5 h-5" />
-              <span>Delete Account</span>
+              <span>{t('deleteAccount')}</span>
             </button>
           </div>
         </div>
 
         {/* Contributors Section - marquee scrolling like Hamo Pro */}
         <div className="bg-white rounded-xl shadow-md p-4 mx-4 mb-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-3">Contributors</h3>
+          <h3 className="text-sm font-medium text-gray-500 mb-3">{t('contributors')}</h3>
           <div className="overflow-hidden">
             <div className="flex animate-marquee whitespace-nowrap">
               {[...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan'], ...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan']].map((name, index) => (
@@ -1471,26 +1494,26 @@ const HamoClient = () => {
         </div>
 
         <div className="text-center py-4 text-xs text-gray-400">
-          <p>Hamo Client Version 1.5.0</p>
+          <p>{t('version')} 1.5.0</p>
         </div>
 
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
             <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-2">Delete Account</h3>
-              <p className="text-gray-600 mb-6">Are you sure? This will permanently delete all your data and conversation history.</p>
+              <h3 className="text-lg font-semibold mb-2">{t('deleteAccount')}</h3>
+              <p className="text-gray-600 mb-6">{t('deleteAccountConfirm')}</p>
               <div className="flex space-x-3">
-                <button 
+                <button
                   onClick={handleDeleteAccount}
                   className="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
                 >
-                  Delete
+                  {t('delete')}
                 </button>
-                <button 
+                <button
                   onClick={() => setShowDeleteConfirm(false)}
                   className="flex-1 bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             </div>
@@ -1505,21 +1528,21 @@ const HamoClient = () => {
                 className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
               >
                 <MessageSquare className="w-6 h-6" />
-                <span className="text-xs">Chats</span>
+                <span className="text-xs">{t('chats')}</span>
               </button>
               <button
                 onClick={() => setActiveView('discover')}
                 className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
               >
                 <Compass className="w-6 h-6" />
-                <span className="text-xs">Discover</span>
+                <span className="text-xs">{t('discover')}</span>
               </button>
               <button
                 onClick={() => setActiveView('settings')}
                 className="flex flex-col items-center space-y-1 px-6 py-2 text-purple-500"
               >
                 <Settings className="w-6 h-6" />
-                <span className="text-xs">Settings</span>
+                <span className="text-xs">{t('settings')}</span>
               </button>
             </div>
           </div>
@@ -1536,8 +1559,8 @@ const HamoClient = () => {
             <div className="flex items-center space-x-3">
               <HamoLogo size={44} />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">My Avatars</h1>
-                <p className="text-xs text-gray-500">A Therapist Avatar with a Real AI Mind</p>
+                <h1 className="text-xl font-bold text-gray-900">{t('myAvatars')}</h1>
+                <p className="text-xs text-gray-500">{t('aTherapistAvatarWithAIRealMind')}</p>
               </div>
             </div>
             <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
@@ -1551,13 +1574,13 @@ const HamoClient = () => {
         {sortedAvatars.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
             <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Avatars Connected</h3>
-            <p className="text-gray-500 mb-6">Discover and connect with therapy avatars</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('noAvatarsConnected')}</h3>
+            <p className="text-gray-500 mb-6">{t('discoverAndConnect')}</p>
             <button
               onClick={() => setActiveView('discover')}
               className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition"
             >
-              Discover Therapists
+              {t('discoverTherapists')}
             </button>
           </div>
         ) : (
@@ -1570,7 +1593,7 @@ const HamoClient = () => {
                 const isToday = lastChatDate.toDateString() === today.toDateString();
                 const timeDisplay = isToday
                   ? lastMessage?.time
-                  : lastChatDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  : lastChatDate.toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' });
 
                 return (
                   <div
@@ -1591,11 +1614,11 @@ const HamoClient = () => {
                         <p className="text-sm text-gray-600 truncate">
                           {lastMessage ? (
                             <span>
-                              {lastMessage.sender === 'client' ? 'You: ' : ''}
+                              {lastMessage.sender === 'client' ? `${t('you')}: ` : ''}
                               {lastMessage.text}
                             </span>
                           ) : (
-                            'No messages yet'
+                            t('noMessagesYet')
                           )}
                         </p>
                       </div>
@@ -1612,7 +1635,7 @@ const HamoClient = () => {
                 className="w-full bg-white border-2 border-purple-500 text-purple-500 px-6 py-4 rounded-xl hover:bg-purple-50 transition flex items-center justify-center space-x-2 font-medium shadow-sm"
               >
                 <Compass className="w-5 h-5" />
-                <span>Discover More Therapists</span>
+                <span>{t('discoverMoreTherapists')}</span>
               </button>
             </div>
           </>
@@ -1620,7 +1643,7 @@ const HamoClient = () => {
       </div>
 
       <div className="text-center py-3 text-xs text-gray-400">
-        Hamo Client Version 1.5.0
+        {t('version')} 1.5.0
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
@@ -1631,21 +1654,21 @@ const HamoClient = () => {
               className="flex flex-col items-center space-y-1 px-6 py-2 text-purple-500"
             >
               <MessageSquare className="w-6 h-6" />
-              <span className="text-xs">Chats</span>
+              <span className="text-xs">{t('chats')}</span>
             </button>
             <button
               onClick={() => setActiveView('discover')}
               className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
             >
               <Compass className="w-6 h-6" />
-              <span className="text-xs">Discover</span>
+              <span className="text-xs">{t('discover')}</span>
             </button>
             <button
               onClick={() => setActiveView('settings')}
               className="flex flex-col items-center space-y-1 px-6 py-2 text-gray-600"
             >
               <Settings className="w-6 h-6" />
-              <span className="text-xs">Settings</span>
+              <span className="text-xs">{t('settings')}</span>
             </button>
           </div>
         </div>
