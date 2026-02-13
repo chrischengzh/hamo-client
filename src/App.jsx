@@ -1345,14 +1345,17 @@ const HamoClient = () => {
 
   if (activeView === 'settings') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
-        <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="h-screen flex flex-col bg-gradient-to-br from-purple-50 to-pink-50" style={{ height: '100dvh' }}>
+        {/* Fixed header */}
+        <div className="flex-shrink-0 bg-white shadow-sm border-b border-gray-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="max-w-3xl mx-auto px-4 py-4">
             <h1 className="text-2xl font-bold text-gray-900">{t('settings')}</h1>
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-4">{t('connectNewAvatar')}</h2>
             <div className="space-y-4">
@@ -1475,31 +1478,31 @@ const HamoClient = () => {
               <span>{t('deleteAccount')}</span>
             </button>
           </div>
-        </div>
 
-        {/* Contributors Section - marquee scrolling like Hamo Pro */}
-        <div className="bg-white rounded-xl shadow-md p-4 mx-4 mb-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-3">{t('contributors')}</h3>
-          <div className="overflow-hidden">
-            <div className="flex animate-marquee whitespace-nowrap">
-              {[...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan'], ...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan']].map((name, index) => (
-                <span key={index} className="mx-4 text-sm text-gray-400 font-medium">{name}</span>
-              ))}
+          {/* Contributors Section - marquee scrolling like Hamo Pro */}
+          <div className="bg-white rounded-xl shadow-md p-4 mx-4 mb-4">
+            <h3 className="text-sm font-medium text-gray-500 mb-3">{t('contributors')}</h3>
+            <div className="overflow-hidden">
+              <div className="flex animate-marquee whitespace-nowrap">
+                {[...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan'], ...['Chris Cheng', 'Anthropic Claude', 'Kerwin Du', 'Amy Chan']].map((name, index) => (
+                  <span key={index} className="mx-4 text-sm text-gray-400 font-medium">{name}</span>
+                ))}
+              </div>
             </div>
+            <style>{`
+              @keyframes marquee {
+                0% { transform: translateX(0%); }
+                100% { transform: translateX(-50%); }
+              }
+              .animate-marquee {
+                animation: marquee 15s linear infinite;
+              }
+            `}</style>
           </div>
-          <style>{`
-            @keyframes marquee {
-              0% { transform: translateX(0%); }
-              100% { transform: translateX(-50%); }
-            }
-            .animate-marquee {
-              animation: marquee 15s linear infinite;
-            }
-          `}</style>
-        </div>
 
-        <div className="text-center py-4 text-xs text-gray-400">
-          <p>{t('version')} 1.5.0</p>
+          <div className="text-center py-4 text-xs text-gray-400">
+            <p>{t('version')} 1.5.0</p>
+          </div>
         </div>
 
         {showDeleteConfirm && (
@@ -1525,7 +1528,8 @@ const HamoClient = () => {
           </div>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+        {/* Bottom Navigation */}
+        <div className="flex-shrink-0 bg-white border-t border-gray-200 shadow-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex items-center justify-around py-3">
               <button
@@ -1557,8 +1561,9 @@ const HamoClient = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
-      <div className="bg-white shadow-sm border-b border-gray-200">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-purple-50 to-pink-50" style={{ height: '100dvh' }}>
+      {/* Fixed header */}
+      <div className="flex-shrink-0 bg-white shadow-sm border-b border-gray-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -1575,7 +1580,9 @@ const HamoClient = () => {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-6">
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 py-6">
         {sortedAvatars.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
             <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -1645,13 +1652,15 @@ const HamoClient = () => {
             </div>
           </>
         )}
+
+        <div className="text-center py-3 text-xs text-gray-400">
+          {t('version')} 1.5.0
+        </div>
+        </div>
       </div>
 
-      <div className="text-center py-3 text-xs text-gray-400">
-        {t('version')} 1.5.0
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+      {/* Bottom Navigation */}
+      <div className="flex-shrink-0 bg-white border-t border-gray-200 shadow-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex items-center justify-around py-3">
             <button
