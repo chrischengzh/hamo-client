@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2, Eye, EyeOff } from 'lucide-react';
 import apiService from './api';
-import { translations, LanguageSwitcher, useTranslation } from './i18n';
+import { translations, LanguageSwitcher, useTranslation } from './i18n.jsx';
 
 // Hamo Logo Component (Light version without text)
 const HamoLogo = ({ size = 40 }) => (
