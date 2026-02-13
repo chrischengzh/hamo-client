@@ -416,19 +416,9 @@ const HamoClient = () => {
 
   // Helper function to split long messages into multiple bubbles (2-3 sentences each)
   const splitIntoMessageBubbles = (text) => {
-    // Split by sentence endings (. ! ?)
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-    const bubbles = [];
-
-    for (let i = 0; i < sentences.length; i += 2) {
-      // Group 2-3 sentences per bubble
-      const bubble = sentences.slice(i, i + 2).join(' ').trim();
-      if (bubble) {
-        bubbles.push(bubble);
-      }
-    }
-
-    return bubbles.length > 0 ? bubbles : [text];
+    // Don't split - show full response in one bubble
+    // AI now generates concise 80-120 word responses that should stay together
+    return [text.trim()];
   };
 
   // v1.3.7: Connect with avatar via API (not just local)
