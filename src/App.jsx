@@ -1069,7 +1069,7 @@ const HamoClient = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
         {/* v1.5.0: Fixed header with title, search bar and popular specialties */}
-        <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-10">
+        <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="max-w-3xl mx-auto px-4 py-4">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('discoverTherapists')}</h1>
 
@@ -1205,7 +1205,7 @@ const HamoClient = () => {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex items-center justify-around py-3">
               <button
