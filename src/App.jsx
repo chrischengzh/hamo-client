@@ -1087,9 +1087,9 @@ const HamoClient = () => {
 
             {/* v1.5.0: Popular Specialties - fixed with max 3 lines */}
             {getUniqueSpecialties().length > 0 && (
-              <div className="mt-4 pb-2">
+              <div className="mt-4 pb-4">
                 <h2 className="text-sm font-semibold text-gray-700 mb-3">{t('popularSpecialties')}</h2>
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-hidden">
+                <div className="flex flex-wrap gap-2 max-h-36 overflow-hidden">
                   {getUniqueSpecialties().map((specialty) => (
                     <button
                       key={specialty}
@@ -1113,7 +1113,7 @@ const HamoClient = () => {
         </div>
 
         {/* v1.5.0: Add padding-top to account for fixed header */}
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6" style={{ paddingTop: getUniqueSpecialties().length > 0 ? '290px' : '160px' }}>
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6" style={{ paddingTop: getUniqueSpecialties().length > 0 ? '320px' : '160px' }}>
 
           {/* Recommended Pro Avatars */}
           <div>
