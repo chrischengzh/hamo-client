@@ -1113,7 +1113,7 @@ const HamoClient = () => {
         </div>
 
         {/* v1.5.0: Add padding-top to account for fixed header */}
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6" style={{ paddingTop: getUniqueSpecialties().length > 0 ? '300px' : '140px' }}>
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6" style={{ paddingTop: getUniqueSpecialties().length > 0 ? '340px' : '140px' }}>
 
           {/* Recommended Pro Avatars */}
           <div>
