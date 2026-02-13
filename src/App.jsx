@@ -1067,9 +1067,9 @@ const HamoClient = () => {
     const filteredAvatars = getFilteredProAvatars();
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
+      <div className="h-screen flex flex-col bg-gradient-to-br from-purple-50 to-pink-50" style={{ height: '100dvh' }}>
         {/* v1.5.0: Fixed header with title, search bar and popular specialties */}
-        <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="flex-shrink-0 bg-white shadow-sm border-b border-gray-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="max-w-3xl mx-auto px-4 py-4">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('discoverTherapists')}</h1>
 
@@ -1112,8 +1112,9 @@ const HamoClient = () => {
           </div>
         </div>
 
-        {/* v1.5.0: Add padding-top to account for fixed header */}
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6" style={{ paddingTop: getUniqueSpecialties().length > 0 ? '340px' : '140px' }}>
+        {/* v1.5.0: Scrollable content area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
 
           {/* Recommended Pro Avatars */}
           <div>
@@ -1198,14 +1199,15 @@ const HamoClient = () => {
               </div>
             )}
           </div>
-        </div>
 
-        <div className="text-center py-3 text-xs text-gray-400">
-          {t('version')} 1.5.0
+          <div className="text-center py-3 text-xs text-gray-400">
+            {t('version')} 1.5.0
+          </div>
+          </div>
         </div>
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <div className="flex-shrink-0 bg-white border-t border-gray-200 shadow-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex items-center justify-around py-3">
               <button
