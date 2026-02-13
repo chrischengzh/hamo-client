@@ -1503,6 +1503,7 @@ const HamoClient = () => {
           <div className="text-center py-4 text-xs text-gray-400">
             <p>{t('version')} 1.5.0</p>
           </div>
+          </div>
         </div>
 
         {showDeleteConfirm && (
