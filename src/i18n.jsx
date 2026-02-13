@@ -5,7 +5,7 @@ export const translations = {
     // Auth pages
     welcomeToHamo: 'Welcome to Hamo',
     hamo: 'Hamo',
-    yourPersonalTherapyCompanion: 'Your Personal Therapy Companion',
+    yourPersonalTherapyCompanion: 'Your Personal AI Therapy Companion',
     signIn: 'Sign In',
     signUp: 'Sign Up',
     nickname: 'Nickname',
@@ -102,7 +102,7 @@ export const translations = {
     // Auth pages
     welcomeToHamo: '欢迎使用 Hamo',
     hamo: 'Hamo',
-    yourPersonalTherapyCompanion: '您的私人心理咨询伙伴',
+    yourPersonalTherapyCompanion: '您的私人虚拟心理咨询师',
     signIn: '登录',
     signUp: '注册',
     nickname: '昵称',
