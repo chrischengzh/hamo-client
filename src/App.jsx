@@ -1349,7 +1349,32 @@ const HamoClient = () => {
         {/* Fixed header */}
         <div className="flex-shrink-0 bg-white shadow-sm border-b border-gray-200" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="max-w-3xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">{t('settings')}</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">{t('settings')}</h1>
+              {/* Language Switcher - similar to Hamo Pro */}
+              <div className="flex items-center space-x-1 border border-gray-300 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setLanguage('en')}
+                  className={`px-3 py-1.5 text-sm font-medium transition ${
+                    language === 'en'
+                      ? 'bg-white text-gray-900'
+                      : 'bg-gray-50 text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setLanguage('zh')}
+                  className={`px-3 py-1.5 text-sm font-medium transition ${
+                    language === 'zh'
+                      ? 'bg-white text-blue-600 border-l border-gray-300'
+                      : 'bg-gray-50 text-gray-500 hover:text-gray-700 border-l border-gray-300'
+                  }`}
+                >
+                  中文
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
