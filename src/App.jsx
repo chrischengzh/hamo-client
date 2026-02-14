@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2, Eye, EyeOff, Globe } from 'lucide-react';
 import apiService from './api';
 import { translations, LanguageSwitcher, useTranslation } from './i18n.jsx';
 
@@ -1352,27 +1352,30 @@ const HamoClient = () => {
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">{t('settings')}</h1>
               {/* Language Switcher - similar to Hamo Pro */}
-              <div className="flex items-center space-x-1 border border-gray-300 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setLanguage('en')}
-                  className={`px-3 py-1.5 text-sm font-medium transition ${
-                    language === 'en'
-                      ? 'bg-white text-gray-900'
-                      : 'bg-gray-50 text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  onClick={() => setLanguage('zh')}
-                  className={`px-3 py-1.5 text-sm font-medium transition ${
-                    language === 'zh'
-                      ? 'bg-white text-blue-600 border-l border-gray-300'
-                      : 'bg-gray-50 text-gray-500 hover:text-gray-700 border-l border-gray-300'
-                  }`}
-                >
-                  中文
-                </button>
+              <div className="flex items-center space-x-2">
+                <Globe className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`px-3 py-1.5 text-sm font-medium transition ${
+                      language === 'en'
+                        ? 'bg-white text-gray-900'
+                        : 'bg-gray-50 text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    onClick={() => setLanguage('zh')}
+                    className={`px-3 py-1.5 text-sm font-medium transition border-l border-gray-300 ${
+                      language === 'zh'
+                        ? 'bg-white text-blue-600'
+                        : 'bg-gray-50 text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    中文
+                  </button>
+                </div>
               </div>
             </div>
           </div>
