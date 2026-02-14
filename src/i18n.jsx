@@ -96,6 +96,26 @@ export const translations = {
 
     // Common
     na: 'N/A',
+
+    // Specialties (for translation from backend values)
+    depressionAnxiety: 'Depression & Anxiety',
+    npdPersonality: 'NPD & Personality Disorders',
+    familyCouples: 'Family & Couples Therapy',
+    childAdolescent: 'Child & Adolescent Therapy',
+    stressBurnout: 'Stress & Burnout',
+    ptsdTrauma: 'PTSD & Trauma',
+    substanceAbuse: 'Substance Abuse & Addiction',
+    ocdAnxiety: 'OCD & Anxiety Disorders',
+
+    // Therapeutic Approaches (for translation from backend values)
+    cbt: 'Cognitive Behavioral Therapy',
+    dbt: 'Dialectical Behaviour Therapy',
+    familySystems: 'Family Systems Therapy',
+    playTherapy: 'Play Therapy & Child Psychology',
+    mindfulness: 'Mindfulness-Based Therapy',
+    traumaFocused: 'Trauma-Focused Therapy',
+    addictionRecovery: 'Addiction Recovery Therapy',
+    act: 'Acceptance and Commitment Therapy',
   },
 
   zh: {
@@ -193,6 +213,26 @@ export const translations = {
 
     // Common
     na: '暂无',
+
+    // Specialties (for translation from backend values)
+    depressionAnxiety: '抑郁与焦虑',
+    npdPersonality: '自恋型及人格障碍',
+    familyCouples: '家庭与婚姻咨询',
+    childAdolescent: '儿童与青少年咨询',
+    stressBurnout: '压力与倦怠',
+    ptsdTrauma: 'PTSD 与创伤',
+    substanceAbuse: '物质滥用与成瘾',
+    ocdAnxiety: '强迫症与焦虑障碍',
+
+    // Therapeutic Approaches (for translation from backend values)
+    cbt: '认知行为疗法',
+    dbt: '辩证行为疗法',
+    familySystems: '家庭系统疗法',
+    playTherapy: '游戏治疗与儿童心理学',
+    mindfulness: '正念疗法',
+    traumaFocused: '聚焦创伤疗法',
+    addictionRecovery: '成瘾康复疗法',
+    act: '接纳承诺疗法',
   }
 };
 
@@ -227,8 +267,53 @@ export const LanguageSwitcher = ({ language, setLanguage }) => (
   </div>
 );
 
+// Specialty value to translation key mapping
+const specialtyMap = {
+  'depression_anxiety': 'depressionAnxiety',
+  'npd_personality': 'npdPersonality',
+  'family_couples': 'familyCouples',
+  'child_adolescent': 'childAdolescent',
+  'stress_burnout': 'stressBurnout',
+  'ptsd_trauma': 'ptsdTrauma',
+  'substance_abuse': 'substanceAbuse',
+  'ocd_anxiety': 'ocdAnxiety',
+};
+
+// Therapeutic approach value to translation key mapping
+const approachMap = {
+  'cbt': 'cbt',
+  'dbt': 'dbt',
+  'family_systems': 'familySystems',
+  'play_therapy': 'playTherapy',
+  'mindfulness': 'mindfulness',
+  'trauma_focused': 'traumaFocused',
+  'addiction_recovery': 'addictionRecovery',
+  'act': 'act',
+};
+
 // Hook to get translation function
 export const useTranslation = (language) => {
   const t = (key) => translations[language]?.[key] || translations.en[key] || key;
-  return { t };
+
+  // Helper function to get translated specialty label from backend value
+  const getSpecialtyLabel = (value) => {
+    if (!value) return '';
+    const translationKey = specialtyMap[value];
+    if (translationKey) {
+      return translations[language]?.[translationKey] || translations.en[translationKey] || value;
+    }
+    return value; // Return original value if not found (for custom or legacy)
+  };
+
+  // Helper function to get translated therapeutic approach label from backend value
+  const getApproachLabel = (value) => {
+    if (!value) return '';
+    const translationKey = approachMap[value];
+    if (translationKey) {
+      return translations[language]?.[translationKey] || translations.en[translationKey] || value;
+    }
+    return value; // Return original value if not found (for custom or legacy)
+  };
+
+  return { t, getSpecialtyLabel, getApproachLabel };
 };

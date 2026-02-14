@@ -38,7 +38,7 @@ const HamoClient = () => {
     const browserLang = navigator.language.toLowerCase();
     return browserLang.startsWith('zh') ? 'zh' : 'en';
   });
-  const { t } = useTranslation(language);
+  const { t, getSpecialtyLabel, getApproachLabel } = useTranslation(language);
 
   // Save language preference
   useEffect(() => {
@@ -1158,8 +1158,8 @@ const HamoClient = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-lg text-gray-900">{avatar.name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{avatar.specialty || t('na')}</p>
-                        <p className="text-xs text-gray-500 mb-3">{avatar.therapeutic_approaches && avatar.therapeutic_approaches.length > 0 ? avatar.therapeutic_approaches.join(' • ') : t('na')}</p>
+                        <p className="text-sm text-gray-600 mb-2">{getSpecialtyLabel(avatar.specialty) || avatar.specialty || t('na')}</p>
+                        <p className="text-xs text-gray-500 mb-3">{avatar.therapeutic_approaches && avatar.therapeutic_approaches.length > 0 ? avatar.therapeutic_approaches.map(ap => getApproachLabel(ap)).join(' • ') : t('na')}</p>
 
                         <div className="flex items-center space-x-4 text-xs text-gray-600 mb-3">
                           <div className="flex items-center space-x-1">
@@ -1261,12 +1261,12 @@ const HamoClient = () => {
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-1">{t('specialty')}</h4>
-                    <p className="text-gray-900">{selectedProAvatar.specialty || t('na')}</p>
+                    <p className="text-gray-900">{getSpecialtyLabel(selectedProAvatar.specialty) || selectedProAvatar.specialty || t('na')}</p>
                   </div>
 
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-1">{t('therapeuticApproach')}</h4>
-                    <p className="text-gray-900">{selectedProAvatar.therapeutic_approaches && selectedProAvatar.therapeutic_approaches.length > 0 ? selectedProAvatar.therapeutic_approaches.join(' • ') : t('na')}</p>
+                    <p className="text-gray-900">{selectedProAvatar.therapeutic_approaches && selectedProAvatar.therapeutic_approaches.length > 0 ? selectedProAvatar.therapeutic_approaches.map(ap => getApproachLabel(ap)).join(' • ') : t('na')}</p>
                   </div>
 
                   {selectedProAvatar.about && (
