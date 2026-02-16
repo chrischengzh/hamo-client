@@ -359,14 +359,17 @@ const HamoClient = () => {
       const userMessageText = messageInput;
       setMessageInput('');
 
-      // Add user message to queue
-      const newQueue = [...messageQueue, userMessageText];
-      setMessageQueue(newQueue);
+      // Add user message to queue using functional update
+      setMessageQueue(prev => {
+        const newQueue = [...prev, userMessageText];
 
-      // If not already sending, start processing queue
-      if (!isSendingMessage) {
-        processMessageQueue(newQueue);
-      }
+        // If not already sending, start processing queue
+        if (!isSendingMessage) {
+          processMessageQueue(newQueue);
+        }
+
+        return newQueue;
+      });
     }
   };
 
@@ -1119,7 +1122,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            {t('version')} 1.5.2
+            {t('version')} 1.5.3
           </div>
         </div>
       </div>
