@@ -540,6 +540,7 @@ class ApiService {
       return {
         success: true,
         response: response.response,
+        messages: response.messages || [],  // Split message bubbles from backend
         psvsPosition: response.psvs_position,
       };
     } catch (error) {

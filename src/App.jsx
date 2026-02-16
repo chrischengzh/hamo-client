@@ -385,12 +385,17 @@ const HamoClient = () => {
         const result = await apiService.sendMessage(currentSessionId, userMessageText);
 
         if (result.success) {
-          // Split long response into multiple bubbles (2-3 sentences each)
-          const messageBubbles = splitIntoMessageBubbles(result.response);
+          // Use backend split messages if available, fallback to full response
+          let messageBubbles;
+          if (result.messages && result.messages.length > 0) {
+            messageBubbles = result.messages.map(m => m.content);
+          } else {
+            messageBubbles = splitIntoMessageBubbles(result.response);
+          }
 
           // Create multiple AI response bubbles
           const aiResponses = messageBubbles.map((bubble, index) => ({
-            id: Date.now() + index + 1,
+            id: result.messages?.[index]?.message_id || (Date.now() + index + 1),
             sender: 'avatar',
             text: bubble,
             time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
