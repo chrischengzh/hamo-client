@@ -545,12 +545,13 @@ class ApiService {
         psvsPosition: response.psvs_position,
       };
     } catch (error) {
-      console.error('❌ Failed to send message:', error);
-
-      // Check if error is an abort error
+      // Check if error is an abort error (user cancelled)
       if (error.name === 'AbortError') {
+        console.log('ℹ️ Request cancelled by user');
         throw error;  // Re-throw abort errors
       }
+
+      console.error('❌ Failed to send message:', error);
 
       return {
         success: false,

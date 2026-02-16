@@ -435,15 +435,14 @@ const HamoClient = () => {
         alert('Failed to send message. Please try again.');
       }
     } catch (error) {
-      // Check if it was aborted
+      // Remove loading indicator
+      setMessages(updatedMessages);
+
+      // Check if it was aborted (user cancelled)
       if (error.name === 'AbortError') {
-        console.log('Request cancelled by user');
-        // Remove loading indicator
-        setMessages(updatedMessages);
+        console.log('✅ Message cancelled successfully');
       } else {
-        // Remove loading indicator on error
-        setMessages(updatedMessages);
-        console.error('Error sending message:', error);
+        console.error('❌ Error sending message:', error);
         alert('Failed to send message. Please check your connection.');
       }
     } finally {
@@ -1103,7 +1102,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            {t('version')} 1.5.4
+            {t('version')} 1.5.5
           </div>
         </div>
       </div>
