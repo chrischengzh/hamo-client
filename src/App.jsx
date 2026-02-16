@@ -382,7 +382,7 @@ const HamoClient = () => {
 
       try {
         // Send message to backend and get REAL Gemini AI response
-        const result = await apiService.sendMessage(currentSessionId, userMessageText);
+        const result = await apiService.sendMessage(currentSessionId, userMessageText, language);
 
         if (result.success) {
           // Use backend split messages if available, fallback to full response

@@ -527,11 +527,11 @@ class ApiService {
   }
 
   // Send a message in a conversation session
-  async sendMessage(sessionId, message) {
+  async sendMessage(sessionId, message, language = 'en') {
     try {
-      console.log('🔵 Sending message:', { sessionId, message });
+      console.log('🔵 Sending message:', { sessionId, message, language });
 
-      const response = await this.request(`/session/${sessionId}/message?message=${encodeURIComponent(message)}`, {
+      const response = await this.request(`/session/${sessionId}/message?message=${encodeURIComponent(message)}&language=${language}`, {
         method: 'POST',
       });
 
