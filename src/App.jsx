@@ -360,20 +360,23 @@ const HamoClient = () => {
       setMessageInput('');
 
       // Add user message to queue
-      setMessageQueue(prev => [...prev, userMessageText]);
+      const newQueue = [...messageQueue, userMessageText];
+      setMessageQueue(newQueue);
 
       // If not already sending, start processing queue
       if (!isSendingMessage) {
-        processMessageQueue([userMessageText]);
+        processMessageQueue(newQueue);
       }
     }
   };
 
   // Process message queue one by one
-  const processMessageQueue = async (initialQueue) => {
+  const processMessageQueue = async (queueToProcess) => {
+    if (queueToProcess.length === 0) return;
+
     setIsSendingMessage(true);
     let currentMessages = [...messages];
-    let queue = [...initialQueue];
+    let queue = [...queueToProcess];
 
     // Add all queued user messages to UI
     const userMessages = queue.map((text, index) => ({
@@ -472,9 +475,19 @@ const HamoClient = () => {
     });
     setConnectedAvatars(updatedAvatars);
 
-    // Clear queue and reset sending flag
-    setMessageQueue([]);
-    setIsSendingMessage(false);
+    // Remove processed messages from queue
+    setMessageQueue(currentQueue => {
+      const remaining = currentQueue.slice(queue.length);
+
+      // If there are remaining messages in queue, process them
+      if (remaining.length > 0) {
+        setTimeout(() => processMessageQueue(remaining), 100);
+        return remaining;
+      } else {
+        setIsSendingMessage(false);
+        return [];
+      }
+    });
   };
 
   // ✅ Removed hard-coded responses - now using real Gemini AI via backend API
