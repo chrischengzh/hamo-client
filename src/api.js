@@ -637,6 +637,30 @@ class ApiService {
     }
   }
 
+  // Cancel the last AI response in a session (when user cancels request)
+  async cancelLastResponse(sessionId) {
+    try {
+      console.log('🔵 Cancelling last response:', sessionId);
+
+      const response = await this.request(`/session/${sessionId}/cancel-last-response`, {
+        method: 'DELETE',
+      });
+
+      console.log('✅ Last response cancelled:', response);
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('❌ Failed to cancel last response:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
   // Get AI Mind by user and avatar ID
   async getAIMind(userId, avatarId) {
     try {

@@ -452,9 +452,19 @@ const HamoClient = () => {
   };
 
   // Handle cancel button click
-  const handleCancelMessage = () => {
+  const handleCancelMessage = async () => {
     if (abortController) {
       abortController.abort();
+
+      // Also delete the last response from the backend
+      if (currentSessionId) {
+        try {
+          await apiService.cancelLastResponse(currentSessionId);
+          console.log('✅ Last response deleted from backend');
+        } catch (error) {
+          console.error('Failed to delete last response:', error);
+        }
+      }
     }
   };
 
@@ -1102,7 +1112,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            {t('version')} 1.5.5
+            {t('version')} 1.5.6
           </div>
         </div>
       </div>
