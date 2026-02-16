@@ -527,12 +527,13 @@ class ApiService {
   }
 
   // Send a message in a conversation session
-  async sendMessage(sessionId, message, language = 'en') {
+  async sendMessage(sessionId, message, language = 'en', signal = null) {
     try {
       console.log('🔵 Sending message:', { sessionId, message, language });
 
       const response = await this.request(`/session/${sessionId}/message?message=${encodeURIComponent(message)}&language=${language}`, {
         method: 'POST',
+        signal: signal,  // Pass abort signal to fetch
       });
 
       console.log('✅ Message sent, received response:', response);
@@ -545,6 +546,11 @@ class ApiService {
       };
     } catch (error) {
       console.error('❌ Failed to send message:', error);
+
+      // Check if error is an abort error
+      if (error.name === 'AbortError') {
+        throw error;  // Re-throw abort errors
+      }
 
       return {
         success: false,

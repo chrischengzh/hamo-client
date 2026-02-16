@@ -57,7 +57,7 @@ const HamoClient = () => {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [currentMindId, setCurrentMindId] = useState(null);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
-  const [messageQueue, setMessageQueue] = useState([]);
+  const [abortController, setAbortController] = useState(null);
   const [isProVisible, setIsProVisible] = useState(true); // v1.4.8: Pro visibility toggle (default: visible)
   const [authForm, setAuthForm] = useState({ email: '', password: '', nickname: '' });
   const [signUpInviteCode, setSignUpInviteCode] = useState('');
@@ -355,43 +355,31 @@ const HamoClient = () => {
   };
 
   const handleSendMessage = async () => {
-    if (messageInput.trim() && selectedAvatar && currentSessionId) {
-      const userMessageText = messageInput;
-      setMessageInput('');
-
-      // Add user message to queue using functional update
-      setMessageQueue(prev => {
-        const newQueue = [...prev, userMessageText];
-
-        // If not already sending, start processing queue
-        if (!isSendingMessage) {
-          processMessageQueue(newQueue);
-        }
-
-        return newQueue;
-      });
+    // If already sending, do nothing (blocked)
+    if (isSendingMessage || !messageInput.trim() || !selectedAvatar || !currentSessionId) {
+      return;
     }
-  };
 
-  // Process message queue one by one
-  const processMessageQueue = async (queueToProcess) => {
-    if (queueToProcess.length === 0) return;
-
+    const userMessageText = messageInput;
     setIsSendingMessage(true);
-    let currentMessages = [...messages];
-    let queue = [...queueToProcess];
+    setMessageInput('');
 
-    // Add all queued user messages to UI
-    const userMessages = queue.map((text, index) => ({
-      id: Date.now() + index,
+    // Create abort controller for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    // Add user message to UI immediately
+    const newMessage = {
+      id: Date.now(),
       sender: 'client',
-      text: text,
+      text: userMessageText,
       time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    }));
-    currentMessages = [...currentMessages, ...userMessages];
-    setMessages(currentMessages);
+    };
 
-    // Add single loading indicator
+    const updatedMessages = [...messages, newMessage];
+    setMessages(updatedMessages);
+
+    // Add loading indicator
     const loadingMessage = {
       id: 'loading',
       sender: 'avatar',
@@ -399,98 +387,76 @@ const HamoClient = () => {
       isLoading: true,
       time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     };
-    setMessages([...currentMessages, loadingMessage]);
+    setMessages([...updatedMessages, loadingMessage]);
 
-    // Process each message in queue
-    for (let i = 0; i < queue.length; i++) {
-      const userMessageText = queue[i];
+    try {
+      // Send message to backend with abort signal
+      const result = await apiService.sendMessage(currentSessionId, userMessageText, language, controller.signal);
 
-      try {
-        // Send message to backend and get REAL Gemini AI response
-        const result = await apiService.sendMessage(currentSessionId, userMessageText, language);
-
-        if (result.success) {
-          // Use backend split messages if available, fallback to full response
-          let messageBubbles;
-          if (result.messages && result.messages.length > 0) {
-            messageBubbles = result.messages.map(m => m.content);
-          } else {
-            messageBubbles = splitIntoMessageBubbles(result.response);
-          }
-
-          // Create multiple AI response bubbles
-          const aiResponses = messageBubbles.map((bubble, index) => ({
-            id: result.messages?.[index]?.message_id || (Date.now() + index + 1),
-            sender: 'avatar',
-            text: bubble,
-            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-          }));
-
-          // Remove loading indicator before adding responses
-          currentMessages = currentMessages.filter(m => m.id !== 'loading');
-
-          // Add AI responses
-          currentMessages = [...currentMessages, ...aiResponses];
-
-          // Re-add loading indicator if more messages in queue
-          if (i < queue.length - 1) {
-            const newLoadingMessage = {
-              id: 'loading',
-              sender: 'avatar',
-              text: '...',
-              isLoading: true,
-              time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-            currentMessages = [...currentMessages, newLoadingMessage];
-          }
-
-          setMessages(currentMessages);
-
-          console.log('✅ Real AI response received:', result.response);
+      if (result.success) {
+        // Use backend split messages if available, fallback to full response
+        let messageBubbles;
+        if (result.messages && result.messages.length > 0) {
+          messageBubbles = result.messages.map(m => m.content);
         } else {
-          console.error('Failed to get AI response:', result.error);
-          if (i === queue.length - 1) {
-            alert('Failed to send message. Please try again.');
+          messageBubbles = splitIntoMessageBubbles(result.response);
+        }
+
+        // Create multiple AI response bubbles
+        const aiResponses = messageBubbles.map((bubble, index) => ({
+          id: result.messages?.[index]?.message_id || (Date.now() + index + 1),
+          sender: 'avatar',
+          text: bubble,
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        }));
+
+        // Remove loading indicator and add AI responses
+        const messagesWithResponse = [...updatedMessages, ...aiResponses];
+        setMessages(messagesWithResponse);
+
+        // Update avatar's last chat time and messages
+        const updatedAvatars = connectedAvatars.map(a => {
+          if (a.id === selectedAvatar.id) {
+            return {
+              ...a,
+              last_chat_time: new Date().toISOString(),
+              messages: messagesWithResponse
+            };
           }
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-        if (i === queue.length - 1) {
-          alert('Failed to send message. Please check your connection.');
-        }
-      }
-    }
+          return a;
+        });
+        setConnectedAvatars(updatedAvatars);
 
-    // Remove final loading indicator
-    const finalMessages = currentMessages.filter(m => m.id !== 'loading');
-    setMessages(finalMessages);
-
-    // Update avatar's last chat time and messages
-    const updatedAvatars = connectedAvatars.map(a => {
-      if (a.id === selectedAvatar.id) {
-        return {
-          ...a,
-          last_chat_time: new Date().toISOString(),
-          messages: finalMessages
-        };
-      }
-      return a;
-    });
-    setConnectedAvatars(updatedAvatars);
-
-    // Remove processed messages from queue
-    setMessageQueue(currentQueue => {
-      const remaining = currentQueue.slice(queue.length);
-
-      // If there are remaining messages in queue, process them
-      if (remaining.length > 0) {
-        setTimeout(() => processMessageQueue(remaining), 100);
-        return remaining;
+        console.log('✅ Real AI response received:', result.response);
       } else {
-        setIsSendingMessage(false);
-        return [];
+        // Remove loading indicator on error
+        setMessages(updatedMessages);
+        console.error('Failed to get AI response:', result.error);
+        alert('Failed to send message. Please try again.');
       }
-    });
+    } catch (error) {
+      // Check if it was aborted
+      if (error.name === 'AbortError') {
+        console.log('Request cancelled by user');
+        // Remove loading indicator
+        setMessages(updatedMessages);
+      } else {
+        // Remove loading indicator on error
+        setMessages(updatedMessages);
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please check your connection.');
+      }
+    } finally {
+      setIsSendingMessage(false);
+      setAbortController(null);
+    }
+  };
+
+  // Handle cancel button click
+  const handleCancelMessage = () => {
+    if (abortController) {
+      abortController.abort();
+    }
   };
 
   // ✅ Removed hard-coded responses - now using real Gemini AI via backend API
@@ -1109,20 +1075,35 @@ const HamoClient = () => {
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder={t('typeYourMessage')}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onKeyPress={(e) => e.key === 'Enter' && !isSendingMessage && handleSendMessage()}
+                placeholder={isSendingMessage ? t('waitingForResponse') || 'Waiting for response...' : t('typeYourMessage')}
+                disabled={isSendingMessage}
+                className={`flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  isSendingMessage ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
               />
               <button
-                onClick={handleSendMessage}
-                className="p-3 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition"
+                onClick={isSendingMessage ? handleCancelMessage : handleSendMessage}
+                disabled={!isSendingMessage && !messageInput.trim()}
+                className={`p-3 rounded-full transition ${
+                  isSendingMessage
+                    ? 'bg-red-500 hover:bg-red-600 cursor-pointer'
+                    : messageInput.trim()
+                      ? 'bg-purple-500 hover:bg-purple-600'
+                      : 'bg-gray-300 cursor-not-allowed'
+                } text-white`}
+                title={isSendingMessage ? 'Click to cancel' : 'Send message'}
               >
-                <Send className="w-5 h-5" />
+                {isSendingMessage ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
               </button>
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            {t('version')} 1.5.3
+            {t('version')} 1.5.4
           </div>
         </div>
       </div>
