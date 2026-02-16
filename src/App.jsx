@@ -846,7 +846,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              {t('version')} 1.5.2
+              {t('version')} 1.5.7
             </div>
           </div>
         </div>
@@ -987,7 +987,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              {t('version')} 1.5.2
+              {t('version')} 1.5.7
             </div>
           </div>
         </div>
@@ -1112,7 +1112,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            {t('version')} 1.5.6
+            {t('version')} 1.5.7
           </div>
         </div>
       </div>
@@ -1257,7 +1257,7 @@ const HamoClient = () => {
           </div>
 
           <div className="text-center py-3 text-xs text-gray-400">
-            {t('version')} 1.5.2
+            {t('version')} 1.5.7
           </div>
           </div>
         </div>
@@ -1585,7 +1585,7 @@ const HamoClient = () => {
           </div>
 
           <div className="text-center py-4 text-xs text-gray-400">
-            <p>{t('version')} 1.5.2</p>
+            <p>{t('version')} 1.5.7</p>
           </div>
           </div>
         </div>
@@ -1739,7 +1739,7 @@ const HamoClient = () => {
         )}
 
         <div className="text-center py-3 text-xs text-gray-400">
-          {t('version')} 1.5.2
+          {t('version')} 1.5.7
         </div>
         </div>
       </div>
