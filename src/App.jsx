@@ -57,6 +57,7 @@ const HamoClient = () => {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [currentMindId, setCurrentMindId] = useState(null);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [messageQueue, setMessageQueue] = useState([]);
   const [isProVisible, setIsProVisible] = useState(true); // v1.4.8: Pro visibility toggle (default: visible)
   const [authForm, setAuthForm] = useState({ email: '', password: '', nickname: '' });
   const [signUpInviteCode, setSignUpInviteCode] = useState('');
@@ -356,29 +357,47 @@ const HamoClient = () => {
   const handleSendMessage = async () => {
     if (messageInput.trim() && selectedAvatar && currentSessionId) {
       const userMessageText = messageInput;
-      setIsSendingMessage(true);
-
-      // Add user message to UI immediately
-      const newMessage = {
-        id: Date.now(),
-        sender: 'client',
-        text: userMessageText,
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      };
-
-      const updatedMessages = [...messages, newMessage];
-      setMessages(updatedMessages);
       setMessageInput('');
 
-      // Add loading indicator
-      const loadingMessage = {
-        id: 'loading',
-        sender: 'avatar',
-        text: '...',
-        isLoading: true,
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages([...updatedMessages, loadingMessage]);
+      // Add user message to queue
+      setMessageQueue(prev => [...prev, userMessageText]);
+
+      // If not already sending, start processing queue
+      if (!isSendingMessage) {
+        processMessageQueue([userMessageText]);
+      }
+    }
+  };
+
+  // Process message queue one by one
+  const processMessageQueue = async (initialQueue) => {
+    setIsSendingMessage(true);
+    let currentMessages = [...messages];
+    let queue = [...initialQueue];
+
+    // Add all queued user messages to UI
+    const userMessages = queue.map((text, index) => ({
+      id: Date.now() + index,
+      sender: 'client',
+      text: text,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    }));
+    currentMessages = [...currentMessages, ...userMessages];
+    setMessages(currentMessages);
+
+    // Add single loading indicator
+    const loadingMessage = {
+      id: 'loading',
+      sender: 'avatar',
+      text: '...',
+      isLoading: true,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages([...currentMessages, loadingMessage]);
+
+    // Process each message in queue
+    for (let i = 0; i < queue.length; i++) {
+      const userMessageText = queue[i];
 
       try {
         // Send message to backend and get REAL Gemini AI response
@@ -401,35 +420,61 @@ const HamoClient = () => {
             time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
           }));
 
-          // Remove loading indicator and add AI responses
-          const messagesWithResponse = [...updatedMessages, ...aiResponses];
-          setMessages(messagesWithResponse);
+          // Remove loading indicator before adding responses
+          currentMessages = currentMessages.filter(m => m.id !== 'loading');
 
-          // Update avatar's last chat time and messages
-          const updatedAvatars = connectedAvatars.map(a => {
-            if (a.id === selectedAvatar.id) {
-              return {
-                ...a,
-                last_chat_time: new Date().toISOString(),
-                messages: messagesWithResponse
-              };
-            }
-            return a;
-          });
-          setConnectedAvatars(updatedAvatars);
+          // Add AI responses
+          currentMessages = [...currentMessages, ...aiResponses];
+
+          // Re-add loading indicator if more messages in queue
+          if (i < queue.length - 1) {
+            const newLoadingMessage = {
+              id: 'loading',
+              sender: 'avatar',
+              text: '...',
+              isLoading: true,
+              time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            };
+            currentMessages = [...currentMessages, newLoadingMessage];
+          }
+
+          setMessages(currentMessages);
 
           console.log('✅ Real AI response received:', result.response);
         } else {
           console.error('Failed to get AI response:', result.error);
-          alert('Failed to send message. Please try again.');
+          if (i === queue.length - 1) {
+            alert('Failed to send message. Please try again.');
+          }
         }
       } catch (error) {
         console.error('Error sending message:', error);
-        alert('Failed to send message. Please check your connection.');
-      } finally {
-        setIsSendingMessage(false);
+        if (i === queue.length - 1) {
+          alert('Failed to send message. Please check your connection.');
+        }
       }
     }
+
+    // Remove final loading indicator
+    const finalMessages = currentMessages.filter(m => m.id !== 'loading');
+    setMessages(finalMessages);
+
+    // Update avatar's last chat time and messages
+    const updatedAvatars = connectedAvatars.map(a => {
+      if (a.id === selectedAvatar.id) {
+        return {
+          ...a,
+          last_chat_time: new Date().toISOString(),
+          messages: finalMessages
+        };
+      }
+      return a;
+    });
+    setConnectedAvatars(updatedAvatars);
+
+    // Clear queue and reset sending flag
+    setMessageQueue([]);
+    setIsSendingMessage(false);
   };
 
   // ✅ Removed hard-coded responses - now using real Gemini AI via backend API
