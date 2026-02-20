@@ -45,6 +45,24 @@ const HamoClient = () => {
     localStorage.setItem('hamo-language', language);
   }, [language]);
 
+  // v1.5.9: End mini session when browser closes/refreshes
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (currentMiniSessionId) {
+        const token = apiService.getAccessToken();
+        const url = `${apiService.baseURL}/mini-session/${currentMiniSessionId}/end`;
+        // Use fetch with keepalive for reliable delivery on page unload
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentMiniSessionId]);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [authMode, setAuthMode] = useState('signin');
@@ -624,6 +642,13 @@ const HamoClient = () => {
   };
 
   const handleLogout = async () => {
+    // v1.5.9: End mini session on logout
+    if (currentMiniSessionId) {
+      apiService.endMiniSession(currentMiniSessionId).catch(err =>
+        console.error('Failed to end mini session on logout:', err)
+      );
+      setCurrentMiniSessionId(null);
+    }
     await apiService.logout();
     setIsAuthenticated(false);
     setCurrentClient(null);
@@ -742,6 +767,12 @@ const HamoClient = () => {
   };
 
   const selectAvatar = async (avatar) => {
+    // v1.5.9: End previous mini session if switching avatars
+    if (currentMiniSessionId) {
+      apiService.endMiniSession(currentMiniSessionId).catch(err =>
+        console.error('Failed to end previous mini session:', err)
+      );
+    }
     setSelectedAvatar(avatar);
     setMessages([]); // Clear messages initially, will load from backend
     setMiniSessions([]);
