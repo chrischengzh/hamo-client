@@ -203,7 +203,9 @@ const HamoClient = () => {
         (avatar.name && avatar.name.toLowerCase().includes(query)) ||
         (avatar.pro_name && avatar.pro_name.toLowerCase().includes(query)) ||
         (avatar.specialty && avatar.specialty.toLowerCase().includes(query)) ||
+        (avatar.specialty && getSpecialtyLabel(avatar.specialty).toLowerCase().includes(query)) ||
         (avatar.therapeutic_approaches && avatar.therapeutic_approaches.some(approach => approach.toLowerCase().includes(query))) ||
+        (avatar.therapeutic_approaches && avatar.therapeutic_approaches.some(approach => getApproachLabel(approach).toLowerCase().includes(query))) ||
         (avatar.specializations && avatar.specializations.some(spec => spec.toLowerCase().includes(query)))
       );
     }
@@ -846,7 +848,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              {t('version')} 1.5.7
+              {t('version')} 1.5.8
             </div>
           </div>
         </div>
@@ -987,7 +989,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              {t('version')} 1.5.7
+              {t('version')} 1.5.8
             </div>
           </div>
         </div>
@@ -1112,7 +1114,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            {t('version')} 1.5.7
+            {t('version')} 1.5.8
           </div>
         </div>
       </div>
@@ -1159,7 +1161,7 @@ const HamoClient = () => {
                           : 'bg-white text-gray-700 border border-gray-300 hover:border-purple-500'
                       }`}
                     >
-                      {specialty}
+                      {getSpecialtyLabel(specialty) || specialty}
                     </button>
                   ))}
                 </div>
@@ -1257,7 +1259,7 @@ const HamoClient = () => {
           </div>
 
           <div className="text-center py-3 text-xs text-gray-400">
-            {t('version')} 1.5.7
+            {t('version')} 1.5.8
           </div>
           </div>
         </div>
@@ -1585,7 +1587,7 @@ const HamoClient = () => {
           </div>
 
           <div className="text-center py-4 text-xs text-gray-400">
-            <p>{t('version')} 1.5.7</p>
+            <p>{t('version')} 1.5.8</p>
           </div>
           </div>
         </div>
@@ -1739,7 +1741,7 @@ const HamoClient = () => {
         )}
 
         <div className="text-center py-3 text-xs text-gray-400">
-          {t('version')} 1.5.7
+          {t('version')} 1.5.8
         </div>
         </div>
       </div>
