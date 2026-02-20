@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2, Eye, EyeOff, Globe } from 'lucide-react';
 import apiService from './api';
 import { translations, LanguageSwitcher, useTranslation } from './i18n.jsx';
@@ -75,7 +75,19 @@ const HamoClient = () => {
   const [selectedProAvatar, setSelectedProAvatar] = useState(null);
   const [allProAvatars, setAllProAvatars] = useState([]);
   const [isLoadingAvatars, setIsLoadingAvatars] = useState(false);
+  const [specialtiesMap, setSpecialtiesMap] = useState({}); // { id: { en: '...', zh: '...' } }
   const chatEndRef = useRef(null);
+
+  // Translate specialty ID to localized name using backend specialties map
+  const translateSpecialty = useCallback((specialtyId) => {
+    if (!specialtyId) return '';
+    const entry = specialtiesMap[specialtyId];
+    if (entry) {
+      return entry[language] || entry.en || specialtyId;
+    }
+    // Fallback to i18n getSpecialtyLabel for unmapped values
+    return getSpecialtyLabel(specialtyId);
+  }, [specialtiesMap, language, getSpecialtyLabel]);
 
   // Helper function to transform avatar data from API to UI format
   // v1.3.7: Using backend field names for consistency
@@ -125,7 +137,21 @@ const HamoClient = () => {
   const fetchAllAvatars = async () => {
     setIsLoadingAvatars(true);
     try {
-      const result = await apiService.getAllAvatars();
+      // Fetch avatars and specialties in parallel
+      const [result, specResult] = await Promise.all([
+        apiService.getAllAvatars(),
+        apiService.getSpecialties(),
+      ]);
+
+      // Build specialties map: { 'ptsd_trauma': { en: 'PTSD & Trauma', zh: '创伤后应激障碍' } }
+      if (specResult.success && specResult.specialties.length > 0) {
+        const map = {};
+        specResult.specialties.forEach(s => {
+          map[s.id] = { en: s.en, zh: s.zh };
+        });
+        setSpecialtiesMap(map);
+        console.log('✅ Specialties map loaded:', map);
+      }
       if (result.success && result.avatars) {
         // Keep backend field names for consistency
         const transformedAvatars = result.avatars.map(avatar => {
@@ -203,7 +229,7 @@ const HamoClient = () => {
         (avatar.name && avatar.name.toLowerCase().includes(query)) ||
         (avatar.pro_name && avatar.pro_name.toLowerCase().includes(query)) ||
         (avatar.specialty && avatar.specialty.toLowerCase().includes(query)) ||
-        (avatar.specialty && getSpecialtyLabel(avatar.specialty).toLowerCase().includes(query)) ||
+        (avatar.specialty && translateSpecialty(avatar.specialty).toLowerCase().includes(query)) ||
         (avatar.therapeutic_approaches && avatar.therapeutic_approaches.some(approach => approach.toLowerCase().includes(query))) ||
         (avatar.therapeutic_approaches && avatar.therapeutic_approaches.some(approach => getApproachLabel(approach).toLowerCase().includes(query))) ||
         (avatar.specializations && avatar.specializations.some(spec => spec.toLowerCase().includes(query)))
@@ -1161,7 +1187,7 @@ const HamoClient = () => {
                           : 'bg-white text-gray-700 border border-gray-300 hover:border-purple-500'
                       }`}
                     >
-                      {getSpecialtyLabel(specialty) || specialty}
+                      {translateSpecialty(specialty) || specialty}
                     </button>
                   ))}
                 </div>
@@ -1216,7 +1242,7 @@ const HamoClient = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-lg text-gray-900">{avatar.name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{getSpecialtyLabel(avatar.specialty) || avatar.specialty || t('na')}</p>
+                        <p className="text-sm text-gray-600 mb-2">{translateSpecialty(avatar.specialty) || avatar.specialty || t('na')}</p>
                         <p className="text-xs text-gray-500 mb-3">{avatar.therapeutic_approaches && avatar.therapeutic_approaches.length > 0 ? avatar.therapeutic_approaches.map(ap => getApproachLabel(ap)).join(' • ') : t('na')}</p>
 
                         <div className="flex items-center space-x-4 text-xs text-gray-600 mb-3">
@@ -1319,7 +1345,7 @@ const HamoClient = () => {
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-1">{t('specialty')}</h4>
-                    <p className="text-gray-900">{getSpecialtyLabel(selectedProAvatar.specialty) || selectedProAvatar.specialty || t('na')}</p>
+                    <p className="text-gray-900">{translateSpecialty(selectedProAvatar.specialty) || selectedProAvatar.specialty || t('na')}</p>
                   </div>
 
                   <div>

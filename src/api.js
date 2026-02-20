@@ -365,6 +365,31 @@ class ApiService {
     }
   }
 
+  // Get all specialties with translations
+  // Uses GET /api/specialties endpoint (public, no auth required)
+  async getSpecialties() {
+    try {
+      console.log('🔵 Fetching specialties...');
+      const response = await this.request('/specialties', {
+        method: 'GET',
+        skipAuth: true,
+      });
+
+      console.log('✅ Specialties fetched:', response);
+      return {
+        success: true,
+        specialties: Array.isArray(response) ? response : [],
+      };
+    } catch (error) {
+      console.error('❌ Failed to get specialties:', error);
+      return {
+        success: false,
+        specialties: [],
+        error: error.message,
+      };
+    }
+  }
+
   // Get a specific avatar by ID
   // Uses GET /api/avatars/{avatar_id} endpoint
   async getAvatarById(avatarId) {
