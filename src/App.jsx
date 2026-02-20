@@ -1187,12 +1187,12 @@ const HamoClient = () => {
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
             {/* v1.5.9: Render history mini sessions (collapsed by default) */}
             {miniSessions.map((ms, msIndex) => {
-              const isCurrentMiniSession = ms.id === currentMiniSessionId || ms.id === 'unknown';
-              const isLastGroup = msIndex === miniSessions.length - 1;
+              // Only the actual current mini session is always expanded
+              const isCurrentMiniSession = currentMiniSessionId && ms.id === currentMiniSessionId;
               const isExpanded = expandedMiniSessions.has(ms.id);
 
               // Current mini session: always show messages
-              if (isCurrentMiniSession || isLastGroup && !currentMiniSessionId) {
+              if (isCurrentMiniSession) {
                 return ms.messages.map((msg) => (
                   <div
                     key={msg.id}
@@ -1215,11 +1215,15 @@ const HamoClient = () => {
               }
 
               // History mini sessions: collapsible
-              const startTime = ms.started_at
-                ? new Date(ms.started_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US', {
+              // Use started_at from backend, or fall back to first message time
+              const startDate = ms.started_at
+                ? new Date(ms.started_at)
+                : (ms.messages.length > 0 && ms.messages[0].time ? null : null);
+              const startTime = startDate
+                ? startDate.toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US', {
                     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                   })
-                : '';
+                : (ms.messages.length > 0 ? ms.messages[0].time : '');
 
               return (
                 <div key={ms.id}>
