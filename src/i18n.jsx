@@ -44,6 +44,8 @@ export const translations = {
     visibleToPro: 'Visible to Pro',
     hiddenFromPro: 'Hidden from Pro',
     typeYourMessage: 'Type your message...',
+    miniSessionMessages: 'messages',
+    miniSessionNoMessages: 'No messages',
 
     // Discover page
     searchPlaceholder: 'Search by name, specialty, or therapy type...',
@@ -161,6 +163,8 @@ export const translations = {
     visibleToPro: '咨询师可见',
     hiddenFromPro: '咨询师不可见',
     typeYourMessage: '输入消息...',
+    miniSessionMessages: '条消息',
+    miniSessionNoMessages: '无消息',
 
     // Discover page
     searchPlaceholder: '搜索姓名、专长或治疗方式...',

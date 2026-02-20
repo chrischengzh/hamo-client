@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2, Eye, EyeOff, Globe } from 'lucide-react';
+import { MessageSquare, Settings, ArrowLeft, Send, Plus, User, LogOut, Trash2, Upload, Search, Compass, X, Star, Award, Clock, Loader2, Eye, EyeOff, Globe, ChevronDown, ChevronRight } from 'lucide-react';
 import apiService from './api';
 import { translations, LanguageSwitcher, useTranslation } from './i18n.jsx';
 
@@ -76,6 +76,10 @@ const HamoClient = () => {
   const [allProAvatars, setAllProAvatars] = useState([]);
   const [isLoadingAvatars, setIsLoadingAvatars] = useState(false);
   const [specialtiesMap, setSpecialtiesMap] = useState({}); // { id: { en: '...', zh: '...' } }
+  // v1.5.9: Mini session state
+  const [currentMiniSessionId, setCurrentMiniSessionId] = useState(null);
+  const [miniSessions, setMiniSessions] = useState([]); // [{ id, started_at, message_count, messages: [] }]
+  const [expandedMiniSessions, setExpandedMiniSessions] = useState(new Set()); // which mini sessions are expanded
   const chatEndRef = useRef(null);
 
   // Translate specialty ID to localized name using backend specialties map
@@ -419,7 +423,7 @@ const HamoClient = () => {
 
     try {
       // Send message to backend with abort signal
-      const result = await apiService.sendMessage(currentSessionId, userMessageText, language, controller.signal);
+      const result = await apiService.sendMessage(currentSessionId, userMessageText, language, controller.signal, currentMiniSessionId);
 
       if (result.success) {
         // Use backend split messages if available, fallback to full response
@@ -665,9 +669,84 @@ const HamoClient = () => {
     }
   };
 
+  // v1.5.9: Helper to format a single backend message into UI format
+  const formatMessage = (msg, index) => {
+    const sender = msg.role === 'user' ? 'client' : 'avatar';
+    const time = new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const results = [];
+
+    if (sender === 'avatar') {
+      const bubbles = splitIntoMessageBubbles(msg.content);
+      bubbles.forEach((bubble, bubbleIndex) => {
+        results.push({
+          id: `${msg.id}-${bubbleIndex}`,
+          sender: 'avatar',
+          text: bubble,
+          time: time,
+          miniSessionId: msg.mini_session_id || null,
+        });
+      });
+    } else {
+      results.push({
+        id: msg.id || `msg-${index}`,
+        sender: 'client',
+        text: msg.content,
+        time: time,
+        miniSessionId: msg.mini_session_id || null,
+      });
+    }
+    return results;
+  };
+
+  // v1.5.9: Group formatted messages by mini session
+  const groupMessagesByMiniSession = (formattedMessages, miniSessionsList) => {
+    // Build a map of mini session id -> meta info
+    const miniSessionMeta = {};
+    miniSessionsList.forEach(ms => {
+      miniSessionMeta[ms.id] = {
+        id: ms.id,
+        started_at: ms.started_at,
+        ended_at: ms.ended_at,
+        message_count: ms.message_count || 0,
+      };
+    });
+
+    // Group messages by mini_session_id
+    const groups = [];
+    const groupMap = {};
+
+    formattedMessages.forEach(msg => {
+      const msId = msg.miniSessionId || 'unknown';
+      if (!groupMap[msId]) {
+        const meta = miniSessionMeta[msId] || {};
+        groupMap[msId] = {
+          id: msId,
+          started_at: meta.started_at || null,
+          ended_at: meta.ended_at || null,
+          clientMessageCount: meta.message_count || 0,
+          messages: [],
+        };
+        groups.push(groupMap[msId]);
+      }
+      groupMap[msId].messages.push(msg);
+    });
+
+    // If no mini sessions from backend, count client messages ourselves
+    groups.forEach(g => {
+      if (!g.clientMessageCount) {
+        g.clientMessageCount = g.messages.filter(m => m.sender === 'client').length;
+      }
+    });
+
+    return groups;
+  };
+
   const selectAvatar = async (avatar) => {
     setSelectedAvatar(avatar);
     setMessages([]); // Clear messages initially, will load from backend
+    setMiniSessions([]);
+    setExpandedMiniSessions(new Set());
+    setCurrentMiniSessionId(null);
     setActiveView('chat');
 
     // Start a new session for this chat
@@ -680,41 +759,38 @@ const HamoClient = () => {
         // Start a session
         const sessionResult = await apiService.startSession(mindResult.mind.id, avatar.id);
         if (sessionResult.success) {
-          setCurrentSessionId(sessionResult.sessionId);
-          console.log('✅ Session started:', sessionResult.sessionId);
+          const sessionId = sessionResult.sessionId;
+          setCurrentSessionId(sessionId);
+          console.log('✅ Session started:', sessionId);
 
-          // Load message history
-          const historyResult = await apiService.getSessionMessages(sessionResult.sessionId);
+          // v1.5.9: Load mini sessions, messages, and start new mini session in parallel
+          const [miniSessionsResult, historyResult, newMiniResult] = await Promise.all([
+            apiService.getMiniSessions(sessionId),
+            apiService.getSessionMessages(sessionId),
+            apiService.startMiniSession(sessionId),
+          ]);
+
+          // Set current mini session id
+          if (newMiniResult.success) {
+            setCurrentMiniSessionId(newMiniResult.miniSessionId);
+            console.log('✅ Mini session started:', newMiniResult.miniSessionId);
+          }
+
+          // Process message history and group by mini session
           if (historyResult.success && historyResult.messages && historyResult.messages.length > 0) {
-            // Process messages and split long avatar responses into multiple bubbles
             const formattedMessages = [];
             historyResult.messages.forEach((msg, index) => {
-              const sender = msg.role === 'user' ? 'client' : 'avatar';
-              const time = new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-              if (sender === 'avatar') {
-                // Split avatar messages into multiple bubbles (2-3 sentences each)
-                const bubbles = splitIntoMessageBubbles(msg.content);
-                bubbles.forEach((bubble, bubbleIndex) => {
-                  formattedMessages.push({
-                    id: `${msg.id}-${bubbleIndex}`,
-                    sender: 'avatar',
-                    text: bubble,
-                    time: time
-                  });
-                });
-              } else {
-                // User messages stay as single bubble
-                formattedMessages.push({
-                  id: msg.id || `msg-${index}`,
-                  sender: 'client',
-                  text: msg.content,
-                  time: time
-                });
-              }
+              formattedMessages.push(...formatMessage(msg, index));
             });
             setMessages(formattedMessages);
-            console.log('📜 Loaded message history:', formattedMessages.length, 'messages');
+
+            // Group into mini sessions
+            const msListFromBackend = miniSessionsResult.success ? miniSessionsResult.miniSessions : [];
+            const grouped = groupMessagesByMiniSession(formattedMessages, msListFromBackend);
+            setMiniSessions(grouped);
+            console.log('📜 Loaded', formattedMessages.length, 'messages in', grouped.length, 'mini sessions');
+          } else {
+            setMiniSessions([]);
           }
         }
       }
@@ -724,6 +800,13 @@ const HamoClient = () => {
   };
 
   const goBackToAvatarList = () => {
+    // v1.5.9: End current mini session when leaving chat
+    if (currentMiniSessionId) {
+      apiService.endMiniSession(currentMiniSessionId).catch(err =>
+        console.error('Failed to end mini session:', err)
+      );
+      setCurrentMiniSessionId(null);
+    }
     setSelectedAvatar(null);
     setActiveView('avatars');
   };
@@ -874,7 +957,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              {t('version')} 1.5.8
+              {t('version')} 1.5.9
             </div>
           </div>
         </div>
@@ -1015,7 +1098,7 @@ const HamoClient = () => {
               </button>
             </div>
             <div className="text-center mt-6 text-xs text-gray-400">
-              {t('version')} 1.5.8
+              {t('version')} 1.5.9
             </div>
           </div>
         </div>
@@ -1072,7 +1155,106 @@ const HamoClient = () => {
         {/* Add padding-top to account for fixed header */}
         <div className="flex-1 overflow-y-auto pb-4 pt-20">
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-            {messages.map((msg) => (
+            {/* v1.5.9: Render history mini sessions (collapsed by default) */}
+            {miniSessions.map((ms, msIndex) => {
+              const isCurrentMiniSession = ms.id === currentMiniSessionId || ms.id === 'unknown';
+              const isLastGroup = msIndex === miniSessions.length - 1;
+              const isExpanded = expandedMiniSessions.has(ms.id);
+
+              // Current mini session: always show messages
+              if (isCurrentMiniSession || isLastGroup && !currentMiniSessionId) {
+                return ms.messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex ${msg.sender === 'client' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                      msg.sender === 'client'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-white shadow-sm'
+                    }`}>
+                      <p className="text-sm">{msg.text}</p>
+                      <p className={`text-xs mt-1 ${
+                        msg.sender === 'client' ? 'text-purple-100' : 'text-gray-400'
+                      }`}>
+                        {msg.time}
+                      </p>
+                    </div>
+                  </div>
+                ));
+              }
+
+              // History mini sessions: collapsible
+              const startTime = ms.started_at
+                ? new Date(ms.started_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US', {
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                  })
+                : '';
+
+              return (
+                <div key={ms.id}>
+                  {/* Collapsed mini session bar */}
+                  <button
+                    onClick={() => {
+                      setExpandedMiniSessions(prev => {
+                        const next = new Set(prev);
+                        if (next.has(ms.id)) {
+                          next.delete(ms.id);
+                        } else {
+                          next.add(ms.id);
+                        }
+                        return next;
+                      });
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 py-2 text-xs text-gray-400 hover:text-gray-600 transition"
+                  >
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    {isExpanded ? (
+                      <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+                    )}
+                    <span className="flex-shrink-0">
+                      {startTime} · {ms.clientMessageCount} {t('miniSessionMessages')}
+                    </span>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                  </button>
+
+                  {/* Expanded messages */}
+                  {isExpanded && (
+                    <div className="space-y-4 mt-2">
+                      {ms.messages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${msg.sender === 'client' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                            msg.sender === 'client'
+                              ? 'bg-purple-500 text-white'
+                              : 'bg-white shadow-sm'
+                          }`}>
+                            <p className="text-sm">{msg.text}</p>
+                            <p className={`text-xs mt-1 ${
+                              msg.sender === 'client' ? 'text-purple-100' : 'text-gray-400'
+                            }`}>
+                              {msg.time}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* v1.5.9: Current session new messages (not yet in miniSessions) */}
+            {messages.filter(msg =>
+              msg.miniSessionId === currentMiniSessionId || msg.miniSessionId === undefined || msg.isLoading
+            ).filter(msg =>
+              // Exclude messages already rendered in miniSessions groups
+              !miniSessions.some(ms => ms.messages.some(m => m.id === msg.id))
+            ).map((msg) => (
               <div
                 key={msg.id}
                 className={`flex ${msg.sender === 'client' ? 'justify-end' : 'justify-start'}`}
@@ -1140,7 +1322,7 @@ const HamoClient = () => {
             </div>
           </div>
           <div className="text-center pb-3 text-xs text-gray-400">
-            {t('version')} 1.5.8
+            {t('version')} 1.5.9
           </div>
         </div>
       </div>
@@ -1285,7 +1467,7 @@ const HamoClient = () => {
           </div>
 
           <div className="text-center py-3 text-xs text-gray-400">
-            {t('version')} 1.5.8
+            {t('version')} 1.5.9
           </div>
           </div>
         </div>
@@ -1613,7 +1795,7 @@ const HamoClient = () => {
           </div>
 
           <div className="text-center py-4 text-xs text-gray-400">
-            <p>{t('version')} 1.5.8</p>
+            <p>{t('version')} 1.5.9</p>
           </div>
           </div>
         </div>
@@ -1767,7 +1949,7 @@ const HamoClient = () => {
         )}
 
         <div className="text-center py-3 text-xs text-gray-400">
-          {t('version')} 1.5.8
+          {t('version')} 1.5.9
         </div>
         </div>
       </div>

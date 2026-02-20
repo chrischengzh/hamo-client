@@ -552,11 +552,16 @@ class ApiService {
   }
 
   // Send a message in a conversation session
-  async sendMessage(sessionId, message, language = 'en', signal = null) {
+  async sendMessage(sessionId, message, language = 'en', signal = null, miniSessionId = null) {
     try {
-      console.log('🔵 Sending message:', { sessionId, message, language });
+      console.log('🔵 Sending message:', { sessionId, message, language, miniSessionId });
 
-      const response = await this.request(`/session/${sessionId}/message?message=${encodeURIComponent(message)}&language=${language}`, {
+      let url = `/session/${sessionId}/message?message=${encodeURIComponent(message)}&language=${language}`;
+      if (miniSessionId) {
+        url += `&mini_session_id=${miniSessionId}`;
+      }
+
+      const response = await this.request(url, {
         method: 'POST',
         signal: signal,  // Pass abort signal to fetch
       });
@@ -630,6 +635,81 @@ class ApiService {
 
       return {
         success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // v1.5.9: Start a mini session (one visit to chat view)
+  async startMiniSession(sessionId) {
+    try {
+      console.log('🔵 Starting mini session for session:', sessionId);
+
+      const response = await this.request(`/session/${sessionId}/mini-session/start`, {
+        method: 'POST',
+      });
+
+      console.log('✅ Mini session started:', response);
+
+      return {
+        success: true,
+        miniSessionId: response.mini_session_id,
+      };
+    } catch (error) {
+      console.error('❌ Failed to start mini session:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // v1.5.9: End a mini session (triggers PSVS update on backend)
+  async endMiniSession(miniSessionId) {
+    try {
+      console.log('🔵 Ending mini session:', miniSessionId);
+
+      const response = await this.request(`/mini-session/${miniSessionId}/end`, {
+        method: 'POST',
+      });
+
+      console.log('✅ Mini session ended:', response);
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('❌ Failed to end mini session:', error);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // v1.5.9: Get all mini sessions for a session
+  async getMiniSessions(sessionId) {
+    try {
+      console.log('🔵 Fetching mini sessions for session:', sessionId);
+
+      const response = await this.request(`/session/${sessionId}/mini-sessions`, {
+        method: 'GET',
+      });
+
+      console.log('✅ Mini sessions fetched:', response);
+
+      return {
+        success: true,
+        miniSessions: Array.isArray(response) ? response : [],
+      };
+    } catch (error) {
+      console.error('❌ Failed to fetch mini sessions:', error);
+
+      return {
+        success: false,
+        miniSessions: [],
         error: error.message,
       };
     }
