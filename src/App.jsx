@@ -45,24 +45,6 @@ const HamoClient = () => {
     localStorage.setItem('hamo-language', language);
   }, [language]);
 
-  // v1.5.9: End mini session when browser closes/refreshes
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (currentMiniSessionId) {
-        const token = apiService.getAccessToken();
-        const url = `${apiService.baseURL}/mini-session/${currentMiniSessionId}/end`;
-        // Use fetch with keepalive for reliable delivery on page unload
-        fetch(url, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-          keepalive: true,
-        }).catch(() => {});
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [currentMiniSessionId]);
-
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [authMode, setAuthMode] = useState('signin');
@@ -99,6 +81,23 @@ const HamoClient = () => {
   const [miniSessions, setMiniSessions] = useState([]); // [{ id, started_at, message_count, messages: [] }]
   const [expandedMiniSessions, setExpandedMiniSessions] = useState(new Set()); // which mini sessions are expanded
   const chatEndRef = useRef(null);
+
+  // v1.5.9: End mini session when browser closes/refreshes
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (currentMiniSessionId) {
+        const token = apiService.getAccessToken();
+        const url = `${apiService.baseURL}/mini-session/${currentMiniSessionId}/end`;
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentMiniSessionId]);
 
   // Translate specialty ID to localized name using backend specialties map
   const translateSpecialty = useCallback((specialtyId) => {
