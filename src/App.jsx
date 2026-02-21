@@ -66,7 +66,7 @@ const HamoClient = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showInviteInput, setShowInviteInput] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
-  const [settingsForm, setSettingsForm] = useState({ nickname: '', email: '', password: '', newPassword: '' });
+  const [settingsForm, setSettingsForm] = useState({ nickname: '', email: '', password: '', newPassword: '', gender: '', age: '' });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [invitingPro, setInvitingPro] = useState(null);
@@ -623,13 +623,15 @@ const HamoClient = () => {
       if (settingsForm.nickname) profileData.nickname = settingsForm.nickname;
       if (settingsForm.email) profileData.email = settingsForm.email;
       if (settingsForm.newPassword) profileData.password = settingsForm.newPassword;
+      if (settingsForm.gender) profileData.gender = settingsForm.gender;
+      if (settingsForm.age) profileData.age = parseInt(settingsForm.age);
 
       const result = await apiService.updateProfile(profileData);
 
       if (result.success) {
         setCurrentClient(result.user);
         alert('Settings updated successfully!');
-        setSettingsForm({ nickname: '', email: '', password: '', newPassword: '' });
+        setSettingsForm({ nickname: '', email: '', password: '', newPassword: '', gender: '', age: '' });
       } else {
         alert(result.error || 'Failed to update settings');
       }
@@ -1744,6 +1746,33 @@ const HamoClient = () => {
                   value={settingsForm.nickname}
                   onChange={(e) => setSettingsForm({ ...settingsForm, nickname: e.target.value })}
                   placeholder={currentClient?.nickname}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('gender')}</label>
+                <select
+                  value={settingsForm.gender}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, gender: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                >
+                  <option value="">{currentClient?.gender ? t(currentClient.gender) : t('selectGender')}</option>
+                  <option value="male">{t('male')}</option>
+                  <option value="female">{t('female')}</option>
+                  <option value="other">{t('other')}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('age')}</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={settingsForm.age}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, age: e.target.value })}
+                  placeholder={currentClient?.age || t('enterAge')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
