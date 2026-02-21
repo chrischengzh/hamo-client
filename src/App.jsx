@@ -152,6 +152,21 @@ const HamoClient = () => {
     checkAuth();
   }, []);
 
+  // Pre-fill settings form when entering settings view
+  useEffect(() => {
+    if (activeView === 'settings' && currentClient) {
+      setSettingsForm(prev => ({
+        ...prev,
+        nickname: currentClient.nickname || currentClient.full_name || '',
+        email: currentClient.email || '',
+        gender: currentClient.gender || currentClient.sex || '',
+        age: currentClient.age ? String(currentClient.age) : '',
+        password: '',
+        newPassword: ''
+      }));
+    }
+  }, [activeView, currentClient]);
+
   // v1.3.7: Fetch real Pro Avatars from API for Discover page
   // API response: { id, name, specialty, therapeutic_approaches[], about, experience_years, experience_months, pro_name, avatar_picture }
   // Using backend field names directly for maintainability
