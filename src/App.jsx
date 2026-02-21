@@ -1222,9 +1222,13 @@ const HamoClient = () => {
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-white" />
-              </div>
+              {selectedAvatar.avatar_picture ? (
+                <img src={selectedAvatar.avatar_picture} alt={selectedAvatar.name} className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                </div>
+              )}
               <div className="flex-1">
                 <h2 className="font-semibold text-gray-900">{selectedAvatar.name}</h2>
                 <p className="text-xs text-gray-500">{selectedAvatar.pro_name}</p>
@@ -1526,9 +1530,13 @@ const HamoClient = () => {
                     className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition cursor-pointer"
                   >
                     <div className="flex items-start space-x-4">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="w-8 h-8 text-white" />
-                      </div>
+                      {avatar.avatar_picture ? (
+                        <img src={avatar.avatar_picture} alt={avatar.name} className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
+                          <User className="w-8 h-8 text-white" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-lg text-gray-900">{avatar.name}</h3>
                         <p className="text-sm text-gray-600 mb-2">{translateSpecialty(avatar.specialty) || avatar.specialty || t('na')}</p>
@@ -1615,9 +1623,13 @@ const HamoClient = () => {
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-4">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                      <User className="w-10 h-10 text-white" />
-                    </div>
+                    {selectedProAvatar.avatar_picture ? (
+                      <img src={selectedProAvatar.avatar_picture} alt={selectedProAvatar.name} className="w-20 h-20 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                        <User className="w-10 h-10 text-white" />
+                      </div>
+                    )}
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{selectedProAvatar.name}</h3>
                       <p className="text-sm text-gray-600">{selectedProAvatar.pro_name}</p>
@@ -2101,9 +2113,13 @@ const HamoClient = () => {
                     className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition cursor-pointer"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
-                        <MessageSquare className="w-7 h-7 text-white" />
-                      </div>
+                      {avatar.avatar_picture ? (
+                        <img src={avatar.avatar_picture} alt={avatar.name} className="w-14 h-14 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
+                          <MessageSquare className="w-7 h-7 text-white" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <h3 className="font-semibold text-gray-900">{avatar.name}</h3>
