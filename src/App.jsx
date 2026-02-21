@@ -181,11 +181,11 @@ const HamoClient = () => {
           const years = avatar.experience_years || 0;
           const months = avatar.experience_months || 0;
           if (years > 0 && months > 0) {
-            experience = `${years}y ${months}m`;
+            experience = language === 'zh' ? `${years}年 ${months}个月` : `${years}y ${months}m`;
           } else if (years > 0) {
-            experience = `${years} years`;
+            experience = language === 'zh' ? `${years}年` : `${years} years`;
           } else if (months > 0) {
-            experience = `${months} months`;
+            experience = language === 'zh' ? `${months}个月` : `${months} months`;
           }
 
           return {
