@@ -1768,11 +1768,11 @@ const HamoClient = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('gender')}</label>
                 <select
-                  value={settingsForm.gender}
+                  value={settingsForm.gender || currentClient?.gender || ''}
                   onChange={(e) => setSettingsForm({ ...settingsForm, gender: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
                 >
-                  <option value="">{currentClient?.gender ? t(currentClient.gender) : t('selectGender')}</option>
+                  <option value="">{t('selectGender')}</option>
                   <option value="male">{t('male')}</option>
                   <option value="female">{t('female')}</option>
                   <option value="other">{t('other')}</option>
