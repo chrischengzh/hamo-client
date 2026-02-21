@@ -502,6 +502,48 @@ class ApiService {
     }
   }
 
+  // Upload profile picture
+  async uploadProfilePicture(file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const url = `${this.baseURL}/client/profile/picture`;
+      const accessToken = this.getAccessToken();
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Upload failed');
+      }
+
+      // Update stored user with new profile picture
+      if (data.user) {
+        this.setUser(data.user);
+      }
+
+      return {
+        success: true,
+        user: data.user,
+        url: data.url,
+      };
+    } catch (error) {
+      console.error('❌ Profile picture upload failed:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
   // Delete client account
   async deleteAccount() {
     try {

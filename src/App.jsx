@@ -82,6 +82,7 @@ const HamoClient = () => {
   const [miniSessions, setMiniSessions] = useState([]); // [{ id, started_at, message_count, messages: [] }]
   const [expandedMiniSessions, setExpandedMiniSessions] = useState(new Set()); // which mini sessions are expanded
   const chatEndRef = useRef(null);
+  const avatarInputRef = useRef(null);
 
   // v1.5.9: End mini session when browser closes/refreshes
   useEffect(() => {
@@ -676,6 +677,39 @@ const HamoClient = () => {
       alert('Failed to update settings. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert(t('pleaseSelectImage') || 'Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert(t('imageTooLarge') || 'Image must be less than 5MB');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await apiService.uploadProfilePicture(file);
+      if (result.success) {
+        setCurrentClient(result.user);
+      } else {
+        alert(result.error || 'Failed to upload avatar');
+      }
+    } catch (error) {
+      alert('Failed to upload avatar. Please try again.');
+    } finally {
+      setIsLoading(false);
+      // Reset file input
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
     }
   };
 
@@ -1807,10 +1841,24 @@ const HamoClient = () => {
             <h2 className="text-lg font-semibold mb-4">{t('profileSettings')}</h2>
             <div className="space-y-4">
               <div className="flex items-center space-x-4 mb-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                  <User className="w-10 h-10 text-white" />
-                </div>
-                <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                {currentClient?.profile_picture ? (
+                  <img src={currentClient.profile_picture} alt="avatar" className="w-20 h-20 rounded-full object-cover" />
+                ) : (
+                  <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                    <User className="w-10 h-10 text-white" />
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={avatarInputRef}
+                  onChange={handleAvatarUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                >
                   <Upload className="w-4 h-4" />
                   <span className="text-sm">{t('changeAvatar')}</span>
                 </button>
@@ -2008,9 +2056,13 @@ const HamoClient = () => {
                 <p className="text-xs text-gray-500">{t('aTherapistAvatarWithAIRealMind')}</p>
               </div>
             </div>
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-white" />
-            </div>
+            {currentClient?.profile_picture ? (
+              <img src={currentClient.profile_picture} alt="avatar" className="w-10 h-10 rounded-full object-cover" />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+            )}
           </div>
         </div>
       </div>
