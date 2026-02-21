@@ -445,15 +445,18 @@ class ApiService {
   }
 
   // v1.3.7: Connect with avatar by ID (from Discover page)
-  async connectWithAvatarById(avatarId) {
+  async connectWithAvatarById(avatarId, clientNickname = null, clientGender = null, clientAge = null) {
     try {
       console.log('🔵 Connecting with avatar by ID:', avatarId);
 
+      const body = { avatar_id: avatarId };
+      if (clientNickname) body.client_nickname = clientNickname;
+      if (clientGender) body.client_gender = clientGender;
+      if (clientAge) body.client_age = clientAge;
+
       const response = await this.request('/client/avatar/connect-by-id', {
         method: 'POST',
-        body: JSON.stringify({
-          avatar_id: avatarId,
-        }),
+        body: JSON.stringify(body),
       });
 
       console.log('✅ Avatar connection successful:', response);

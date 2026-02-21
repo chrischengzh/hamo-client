@@ -69,6 +69,9 @@ export const translations = {
     avatarConnectedSuccess: 'Avatar connected successfully!',
     alreadyConnected: 'You are already connected with this avatar!',
     failedToConnect: 'Failed to connect with avatar. Please try again.',
+    profileIncomplete: 'Complete Your Profile',
+    profileIncompleteMessage: 'Please complete your profile before adding a therapist:',
+    goToSettings: 'Go to Settings',
 
     // Settings page
     settings: 'Settings',
@@ -195,6 +198,9 @@ export const translations = {
     avatarConnectedSuccess: '咨询师连接成功！',
     alreadyConnected: '您已经与此咨询师连接！',
     failedToConnect: '连接失败，请重试。',
+    profileIncomplete: '请完善个人资料',
+    profileIncompleteMessage: '添加咨询师前请先完善以下信息：',
+    goToSettings: '前往设置',
 
     // Settings page
     settings: '设置',

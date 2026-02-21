@@ -73,6 +73,7 @@ const HamoClient = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [selectedProAvatar, setSelectedProAvatar] = useState(null);
+  const [showProfileIncompleteModal, setShowProfileIncompleteModal] = useState(false);
   const [allProAvatars, setAllProAvatars] = useState([]);
   const [isLoadingAvatars, setIsLoadingAvatars] = useState(false);
   const [specialtiesMap, setSpecialtiesMap] = useState({}); // { id: { en: '...', zh: '...' } }
@@ -541,19 +542,40 @@ const HamoClient = () => {
     return [text.trim()];
   };
 
+  // v1.5.10: Check which profile fields are missing for avatar connection
+  const getMissingProfileFields = () => {
+    const missing = [];
+    if (!(currentClient?.nickname || currentClient?.full_name)) missing.push(t('nickname'));
+    if (!(currentClient?.gender || currentClient?.sex)) missing.push(t('gender'));
+    if (!currentClient?.age) missing.push(t('age'));
+    return missing;
+  };
+
   // v1.3.7: Connect with avatar via API (not just local)
   // Using backend field names for consistency
   const handleAddProAvatar = async (proAvatar) => {
     // Check if already connected
     if (connectedAvatars.find(a => a.id === proAvatar.id)) {
-      alert('You are already connected with this avatar!');
+      alert(t('alreadyConnected'));
       setSelectedProAvatar(null);
+      return;
+    }
+
+    // v1.5.10: Check if profile is complete (nickname, gender, age required)
+    const missingFields = getMissingProfileFields();
+    if (missingFields.length > 0) {
+      setShowProfileIncompleteModal(true);
       return;
     }
 
     setIsLoading(true);
     try {
-      const result = await apiService.connectWithAvatarById(proAvatar.id);
+      const result = await apiService.connectWithAvatarById(
+        proAvatar.id,
+        currentClient?.nickname || currentClient?.full_name || '',
+        currentClient?.gender || currentClient?.sex || '',
+        currentClient?.age || null
+      );
 
       if (result.success) {
         // Use avatar data from API response if available, fallback to proAvatar
@@ -1652,6 +1674,46 @@ const HamoClient = () => {
                     {t('close')}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* v1.5.10: Profile Incomplete Modal */}
+        {showProfileIncompleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {t('profileIncomplete')}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {t('profileIncompleteMessage')}
+              </p>
+              <div className="mb-6 space-y-2">
+                {getMissingProfileFields().map((field, i) => (
+                  <div key={i} className="flex items-center space-x-2 text-red-600">
+                    <span className="w-2 h-2 bg-red-500 rounded-full inline-block" />
+                    <span className="text-sm font-medium">{field}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowProfileIncompleteModal(false);
+                    setSelectedProAvatar(null);
+                    setActiveView('settings');
+                  }}
+                  className="flex-1 bg-purple-500 text-white px-4 py-3 rounded-lg hover:bg-purple-600 transition font-medium"
+                >
+                  {t('goToSettings')}
+                </button>
+                <button
+                  onClick={() => setShowProfileIncompleteModal(false)}
+                  className="flex-1 bg-gray-200 px-4 py-3 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                  {t('cancel')}
+                </button>
               </div>
             </div>
           </div>
