@@ -209,7 +209,7 @@ export const translations = {
     enterInviteCode: '输入邀请码',
     connect: '连接',
     cancel: '取消',
-    profileSettings: '个人资料设置',
+    profileSettings: '个人设置',
     changeAvatar: '更换头像',
     currentPassword: '当前密码',
     newPassword: '新密码',
